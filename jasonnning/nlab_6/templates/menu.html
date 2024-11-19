@@ -3,37 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spotgo Insight</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <title>Spotgo - Menu</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
             background: linear-gradient(135deg, #121212, #1e1e1e);
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Arial', sans-serif;
             color: #fff;
             height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             margin: 0;
-            overflow: hidden;
         }
         h1 {
             font-size: 2.5rem;
-            font-weight: 600;
+            font-weight: bold;
             margin-bottom: 40px;
-            text-align: center;
             text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+            text-align: center;
         }
         .btn {
             background-color: #1db954;
             border-radius: 25px;
             padding: 15px 40px;
             font-size: 1.2rem;
-            font-weight: 600;
+            font-weight: bold;
             border: none;
             transition: transform 0.3s, background-color 0.3s;
             margin-bottom: 15px;
+            width: 100%;
         }
         .btn:hover {
             transform: scale(1.05);
@@ -52,10 +51,9 @@
 </head>
 <body>
     <div class="container">
-        <h1>Spotgo Insight</h1>
-        <a href="/album" class="btn w-100">Enter Album Mode</a>
-        <a href="/singer" class="btn w-100">Enter Singer Mode</a>
+        <h1>Spotgo</h1>
+        <a href="/album" class="btn">專輯模式</a>
+        <a href="/singer" class="btn">歌手模式</a>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

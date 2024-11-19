@@ -179,6 +179,42 @@ func main() {
 		c.Redirect(http.StatusFound, "/singer")
 	})
 
+	// Remove Album (Delete Album)
+	r.GET("/album/delete/:id", func(c *gin.Context) {
+		id, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid ID format"})
+			return
+		}
+
+		for i, album := range albumList {
+			if album.ID == id {
+				// 從專輯列表中刪除
+				albumList = append(albumList[:i], albumList[i+1:]...)
+				break
+			}
+		}
+		c.Redirect(http.StatusFound, "/album")
+	})
+
+	// Remove Singer (Delete Singer)
+	r.GET("/singer/delete/:id", func(c *gin.Context) {
+		id, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid ID format"})
+			return
+		}
+
+		for i, singer := range singerList {
+			if singer.ID == id {
+				// 從歌手列表中刪除
+				singerList = append(singerList[:i], singerList[i+1:]...)
+				break
+			}
+		}
+		c.Redirect(http.StatusFound, "/singer")
+	})
+
 	// Start the server
 	r.Run(":8080")
 }
