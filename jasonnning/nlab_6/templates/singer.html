@@ -1,0 +1,122 @@
+<!-- singer.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Singer Mode</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #121212;
+            color: #fff;
+            font-family: 'Poppins', sans-serif;
+        }
+        h1, h2 {
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 30px;
+        }
+        table {
+            background-color: #222;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: center;
+        }
+        tr:hover {
+            background-color: #333;
+            transform: translateY(-5px);
+            transition: transform 0.2s;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 50px auto;
+        }
+        .btn-green {
+            background-color: #1db954;
+            color: white;
+            font-weight: 600;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        .btn-green:hover {
+            background-color: #148f4a;
+            transform: scale(1.05);
+        }
+        .form-control {
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+        .star-btn {
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.2s, transform 0.2s;
+            text-decoration: none; /* 去掉底線 */
+        }
+        .star-btn:hover {
+            transform: scale(1.2);
+        }
+        .star-filled {
+            color: gold;
+        }
+        .star-empty {
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Singer List</h1>
+        <table class="table table-dark table-striped">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Genre</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .singers}}
+                    <tr>
+                        <td>{{.Name}}</td>
+                        <td>{{.Genre}}</td>
+                        <td>
+                            <!-- Favorite Star Icon -->
+                            {{if .IsFavorite}}
+                                <a href="/favorite/singer/remove/{{.ID}}" class="star-btn star-filled">★</a>
+                            {{else}}
+                                <a href="/favorite/singer/{{.ID}}" class="star-btn star-empty">☆</a>
+                            {{end}}
+                        </td>
+                    </tr>
+                {{end}}
+            </tbody>
+        </table>
+
+        <h2>Add New Singer</h2>
+        <form action="/add/singer" method="POST" class="mb-4">
+            <div class="mb-3">
+                <input type="text" name="name" class="form-control" placeholder="Singer Name" required>
+            </div>
+            <div class="mb-3">
+                <input type="text" name="genre" class="form-control" placeholder="Genre" required>
+            </div>
+            <button type="submit" class="btn btn-green">Add Singer</button>
+        </form>
+
+        <h2>Your Favorite Singers</h2>
+        <ul class="list-group">
+            {{range .favorites}}
+                <li class="list-group-item">{{.Name}} - {{.Genre}}</li>
+            {{else}}
+                <li class="list-group-item">No favorite singers yet.</li>
+            {{end}}
+        </ul>
+
+        <!-- Back to Menu button -->
+        <a href="/" class="btn btn-light mt-4">Back to Menu</a>
+    </div>
+</body>
+</html>
