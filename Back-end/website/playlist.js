@@ -10,7 +10,7 @@ document.getElementById('loadPlaylist').addEventListener('click', () => {
 function fetchPlaylist() {
   fetch(apiUrl, {
     headers: {
-      'Authorization': `Bearer BQDGC4_QIK2odba0gMNaBLzQJ5-J_rtiVfs4BgawGlSS7bd5Sm8kuv9lOZkjJI__Qbyx7SfA5tiOEPG5K3Yd43q-MeLZKSo7rzOPNCkRr0-hty4Mkks`,
+      'Authorization': `Bearer ${accessToken}`,
     },
   })
     .then((response) => {
