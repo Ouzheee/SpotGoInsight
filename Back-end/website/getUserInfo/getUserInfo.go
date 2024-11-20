@@ -4,17 +4,55 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"net/url"
 )
 
 var (
-	clientID     = "ab43d6c3cbdc479ca53096f213e19f2a" // 替換為您的 Spotify Client ID
-	clientSecret = "5e3c41d08b5f467799668a62b566aa18" // 替換為您的 Spotify Client Secret
+	clientID     = "592fa46f290e4f1aa8b5768bbb802177" // 替換為您的 Spotify Client ID
+	clientSecret = "4ddd10a13f2a4c00af97c1916b21a8c2" // 替換為您的 Spotify Client Secret
 	redirectURI  = "http://localhost:8086/callback"   // 替換為您設定的 Redirect URI
-	//state        = "randomStateString"   // 隨機字串，用於防止 CSRF 攻擊
+	//state        = "randomStateString"   // 隨機字http://localhost:8086/callback串，用於防止 CSRF 攻擊
 )
+
+type user struct {
+	Name       string
+	SpotifyURL string
+	ImageURL   string
+	UserID     string
+}
+
+var userdata user
+
+func getUserInfo(userInfo map[string]interface{}) {
+	externalUrls := userInfo["external_urls"].(map[string]interface{})
+	images := userInfo["images"].([]interface{})
+
+	userdata = user{
+		Name:       userInfo["display_name"].(string),
+		SpotifyURL: externalUrls["spotify"].(string),
+		ImageURL:   images[0].(map[string]interface{})["url"].(string),
+		UserID:     userInfo["id"].(string),
+	}
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
+	temp, err := template.ParseFiles("userInfo.html")
+	if err != nil {
+		http.Error(w, "無法加載模板", http.StatusInternalServerError)
+		log.Println(err)
+		return
+	}
+
+	err = temp.Execute(w, userdata)
+	if err != nil {
+		http.Error(w, "無法加載模板", http.StatusInternalServerError)
+		log.Println(err)
+		return
+	}
+}
 
 // 生成授權連結
 func generateAuthURL() string {
@@ -33,8 +71,11 @@ func generateAuthURL() string {
 func startServer() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		authURL := generateAuthURL()
-		fmt.Fprintf(w, "請點擊以下連結進行授權：<a href='%s'>Spotify 授權</a>", authURL)
+		//fmt.Fprintf(w, "請點擊以下連結進行授權：<a href='%s'>Spotify 授權</a>", authURL)
+		http.Redirect(w, r, authURL, http.StatusSeeOther)
 	})
+
+	http.HandleFunc("/userinfo", handler)
 
 	http.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
 		// 驗證 state
@@ -67,6 +108,7 @@ func startServer() {
 			return
 		}
 
+		http.Redirect(w, r, "/userinfo", http.StatusSeeOther)
 		fmt.Fprintf(w, "Spotify API 呼叫成功！用戶資訊：%v", userInfo)
 	})
 
@@ -154,23 +196,9 @@ func getCurrentUserInfo(accessToken string) (map[string]interface{}, error) {
 	}
 
 	//test print
-	printUserInfo(userInfo)
+	getUserInfo(userInfo)
 
 	return userInfo, nil
-}
-
-func printUserInfo(userInfo map[string]interface{}) {
-	name := userInfo["display_name"].(string)
-	externalUrls := userInfo["external_urls"].(map[string]interface{})
-	spotifyURL := externalUrls["spotify"].(string)
-	images := userInfo["images"].([]interface{})
-	imageURL := images[0].(map[string]interface{})["url"].(string)
-	userID := userInfo["id"].(string)
-
-	fmt.Println("1. user name:", name)
-	fmt.Println("2. external url: ", spotifyURL)
-	fmt.Println("3. image url: ", imageURL)
-	fmt.Println("4. user ID: ", userID)
 }
 
 // Token 回應結構體
