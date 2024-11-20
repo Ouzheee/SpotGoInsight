@@ -13,6 +13,8 @@ type Album struct {
 	Tracks     int    `json:"tracks"`
 	Year       int    `json:"year"`
 	IsFavorite bool   `json:"is_favorite"`
+	AudioURL   string `json:"audio_url"`
+	ImageURL   string `json:"image_url"`
 }
 
 type Singer struct {
@@ -20,17 +22,34 @@ type Singer struct {
 	Name       string `json:"name"`
 	Genre      string `json:"genre"`
 	IsFavorite bool   `json:"is_favorite"`
+	AudioURL   string `json:"audio_url"`
+	ImageURL   string `json:"image_url"`
 }
 
 var maxAlbumID = 1
 var maxSingerID = 1
 
 var albumList = []Album{
-	{ID: 1, Name: "Future Nostalgia", Tracks: 11, Year: 2020, IsFavorite: false},
+	{
+		ID:         1,
+		Name:       "Future Nostalgia",
+		Tracks:     11,
+		Year:       2020,
+		IsFavorite: false,
+		AudioURL:   "https://p.scdn.co/mp3-preview/82e442871e6afd7efa4410ca735b3b13644f5184",
+		ImageURL:   "https://i.scdn.co/image/ab67616d00001e02ff9ca10b55ce82ae553c8228",
+	},
 }
 
 var singerList = []Singer{
-	{ID: 1, Name: "Dua Lipa", Genre: "Pop", IsFavorite: false},
+	{
+		ID:         1,
+		Name:       "Dua Lipa",
+		Genre:      "Pop",
+		IsFavorite: false,
+		AudioURL:   "https://p.scdn.co/mp3-preview/82e442871e6afd7efa4410ca735b3b13644f5184",
+		ImageURL:   "https://i.scdn.co/image/ab67616d00001e02ff9ca10b55ce82ae553c8228",
+	},
 }
 
 var favoriteAlbums []Album
