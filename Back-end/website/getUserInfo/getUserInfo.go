@@ -13,6 +13,7 @@ var (
 	clientID     = "ab43d6c3cbdc479ca53096f213e19f2a" // 替換為您的 Spotify Client ID
 	clientSecret = "5e3c41d08b5f467799668a62b566aa18" // 替換為您的 Spotify Client Secret
 	redirectURI  = "http://localhost:8086/callback"   // 替換為您設定的 Redirect URI
+	artistName   = "King gnu"
 	//state        = "randomStateString"   // 隨機字串，用於防止 CSRF 攻擊
 )
 
@@ -33,7 +34,7 @@ func generateAuthURL() string {
 func startServer() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		authURL := generateAuthURL()
-		fmt.Fprintf(w, "請點擊以下連結進行授權：<a href='%s'>Spotify 授權</a>", authURL)
+		fmt.Fprintf(w, "請點擊以下連結進行授權：\n%s", authURL)
 	})
 
 	http.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
@@ -62,12 +63,20 @@ func startServer() {
 		// 調用 Spotify API
 		userInfo, err := getCurrentUserInfo(token.AccessToken)
 		if err != nil {
-			http.Error(w, "無法調用 Spotify API", http.StatusInternalServerError)
+			http.Error(w, "無法調用 UserInfo API", http.StatusInternalServerError)
+			log.Println(err)
+			return
+		}
+
+		signerID, err := searchArtist(artistName, token.AccessToken)
+		if err != nil {
+			http.Error(w, "無法調用 Signer ID API", http.StatusInternalServerError)
 			log.Println(err)
 			return
 		}
 
 		fmt.Fprintf(w, "Spotify API 呼叫成功！用戶資訊：%v", userInfo)
+		fmt.Fprintf(w, "Signer ID API 呼叫成功！歌手 %s 的ID：%v", artistName, signerID)
 	})
 
 	fmt.Println("伺服器啟動於 http://localhost:8086")
@@ -81,7 +90,7 @@ func exchangeCodeForToken(code string) (*TokenResponse, error) {
 	data.Set("grant_type", "authorization_code")
 	// 將從回調中獲取的授權碼加入請求參數
 	data.Set("code", code)
-	// 設定重定向 URI，必須與 Spotify 開發者應用程式設定中的一致
+	// 設定重定向 URI，必須與 Spotify
 	data.Set("redirect_uri", redirectURI)
 
 	// 建立一個新的 POST 請求，目標為 Spotify 的 Token 端點
@@ -154,6 +163,58 @@ func getCurrentUserInfo(accessToken string) (map[string]interface{}, error) {
 	}
 
 	return userInfo, nil
+}
+
+func searchArtist(artistName string, accessToken string) (string, error) {
+	// 編碼搜尋參數
+	baseURL := "https://api.spotify.com/v1/search"
+	params := url.Values{}
+	params.Set("q", artistName)  // 搜索的關鍵字
+	params.Set("type", "artist") // 資料類型為歌手
+	params.Set("limit", "1")     // 只需要第一個結果
+
+	// 建立完整的請求 URL
+	requestURL := fmt.Sprintf("%s?%s", baseURL, params.Encode())
+
+	// 建立 HTTP 請求
+	req, err := http.NewRequest("GET", requestURL, nil)
+	if err != nil {
+		return "", err
+	}
+
+	// 設定 Authorization Header
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+
+	// 發送請求
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	// 確認回應狀態碼
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("搜索 API 請求失敗，狀態碼: %d", resp.StatusCode)
+	}
+
+	// 解析 JSON 回應
+	var result map[string]interface{}
+	err = json.NewDecoder(resp.Body).Decode(&result)
+	if err != nil {
+		return "", err
+	}
+
+	// 提取歌手 ID
+	artists := result["artists"].(map[string]interface{})
+	items := artists["items"].([]interface{})
+	if len(items) == 0 {
+		return "", fmt.Errorf("未找到名為 '%s' 的歌手", artistName)
+	}
+
+	artist := items[0].(map[string]interface{})
+	artistID := artist["id"].(string)
+	return artistID, nil
 }
 
 // Token 回應結構體
