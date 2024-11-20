@@ -307,6 +307,7 @@ func searchArtist(artistName string, accessToken string) ([]string, error) {
 		topTracks = append(topTracks, trackInfo["name"].(string))
 	}
 	signerdata.SignerID = artistID
+	signerdata.Name = artistName
 	return topTracks, nil
 }
 
