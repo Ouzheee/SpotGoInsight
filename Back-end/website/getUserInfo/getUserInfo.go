@@ -45,7 +45,7 @@ func startServer() {
 
 		// 獲取授權碼
 		code := r.URL.Query().Get("code")
-		log.Println("token=", code)
+		fmt.Println("token: ", code)
 		if code == "" {
 			http.Error(w, "未獲取到授權碼", http.StatusBadRequest)
 			return
@@ -153,7 +153,24 @@ func getCurrentUserInfo(accessToken string) (map[string]interface{}, error) {
 		return nil, err
 	}
 
+	//test print
+	printUserInfo(userInfo)
+
 	return userInfo, nil
+}
+
+func printUserInfo(userInfo map[string]interface{}) {
+	name := userInfo["display_name"].(string)
+	externalUrls := userInfo["external_urls"].(map[string]interface{})
+	spotifyURL := externalUrls["spotify"].(string)
+	images := userInfo["images"].([]interface{})
+	imageURL := images[0].(map[string]interface{})["url"].(string)
+	userID := userInfo["id"].(string)
+
+	fmt.Println("1. user name:", name)
+	fmt.Println("2. external url: ", spotifyURL)
+	fmt.Println("3. image url: ", imageURL)
+	fmt.Println("4. user ID: ", userID)
 }
 
 // Token 回應結構體
