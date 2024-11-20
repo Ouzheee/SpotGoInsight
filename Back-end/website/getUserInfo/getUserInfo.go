@@ -77,64 +77,97 @@ func startServer() {
 // 使用授權碼交換訪問 Token
 func exchangeCodeForToken(code string) (*TokenResponse, error) {
 	data := url.Values{}
+	// 設定請求參數：授權類型為 "authorization_code"
 	data.Set("grant_type", "authorization_code")
+	// 將從回調中獲取的授權碼加入請求參數
 	data.Set("code", code)
+	// 設定重定向 URI，必須與 Spotify 開發者應用程式設定中的一致
 	data.Set("redirect_uri", redirectURI)
 
+	// 建立一個新的 POST 請求，目標為 Spotify 的 Token 端點
 	req, err := http.NewRequest("POST", "https://accounts.spotify.com/api/token", bytes.NewBufferString(data.Encode()))
 	if err != nil {
+		// 如果建立請求時發生錯誤，返回錯誤信息
 		return nil, err
 	}
 
+	// 設定請求的內容類型為 "application/x-www-form-urlencoded"
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	// 使用基本身份驗證將 Client ID 和 Client Secret 加入請求頭
 	req.SetBasicAuth(clientID, clientSecret)
 
+	// 建立一個 HTTP 客戶端來發送請求
 	client := &http.Client{}
+	// 發送請求並接收回應
 	resp, err := client.Do(req)
 	if err != nil {
+		// 如果請求失敗，返回錯誤信息
 		return nil, err
 	}
+	// 確保在函式結束前關閉回應主體
 	defer resp.Body.Close()
 
+	// 檢查回應的狀態碼，如果不是 200 OK，表示請求失敗
 	if resp.StatusCode != http.StatusOK {
+		// 返回自訂的錯誤信息，包含狀態碼
 		return nil, fmt.Errorf("token 請求失敗，狀態碼: %d", resp.StatusCode)
 	}
 
+	// 定義一個結構體來存放解析後的 Token 回應
 	var tokenResponse TokenResponse
+	// 將回應的 JSON 數據解碼到 tokenResponse 結構體中
 	err = json.NewDecoder(resp.Body).Decode(&tokenResponse)
 	if err != nil {
+		// 如果解碼過程中出現錯誤，返回錯誤信息
 		return nil, err
 	}
 
+	// 返回取得的 TokenResponse 資料和空錯誤（表示成功）
 	return &tokenResponse, nil
 }
 
 // 調用 Spotify API 獲取當前用戶資訊
 func getCurrentUserInfo(accessToken string) (map[string]interface{}, error) {
+	// 建立一個新的 GET 請求，目標為 Spotify 的當前用戶端點
+	// URL: "https://api.spotify.com/v1/me"
 	req, err := http.NewRequest("GET", "https://api.spotify.com/v1/me", nil)
 	if err != nil {
+		// 如果建立請求時發生錯誤，返回錯誤信息
 		return nil, err
 	}
 
+	// 設置授權標頭，使用 Bearer Token 認證
+	// 授權格式："Authorization: Bearer <access_token>"
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 
+	// 創建一個 HTTP 客戶端用於發送請求
 	client := &http.Client{}
+	// 發送請求並接收回應
 	resp, err := client.Do(req)
 	if err != nil {
+		// 如果請求失敗，返回錯誤信息
 		return nil, err
 	}
+	// 確保在函式結束時關閉回應的主體，避免資源泄漏
 	defer resp.Body.Close()
 
+	// 檢查回應的 HTTP 狀態碼
+	// 如果不是 200 OK，則表示請求失敗
 	if resp.StatusCode != http.StatusOK {
+		// 返回一個包含狀態碼的錯誤信息，方便調試
 		return nil, fmt.Errorf("API 請求失敗，狀態碼: %d", resp.StatusCode)
 	}
 
+	// 定義一個通用的 map 用於存放解析後的用戶資訊
 	var userInfo map[string]interface{}
+	// 使用 JSON 解碼器將回應主體中的 JSON 資料解碼到 userInfo map 中
 	err = json.NewDecoder(resp.Body).Decode(&userInfo)
 	if err != nil {
+		// 如果解碼過程中出現錯誤，返回錯誤信息
 		return nil, err
 	}
 
+	// 返回解析後的用戶資訊和 nil 錯誤，表示成功
 	return userInfo, nil
 }
 
