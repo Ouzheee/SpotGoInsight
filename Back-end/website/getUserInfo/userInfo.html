@@ -7,9 +7,10 @@
 </head>
 <body>
     <h1>Name: {{.Name}}</h1>
-    <h1>External URL: <a href="{{.SpotifyURL}}" target="_blank">{{.SpotifyURL}}</a></h1>
+    <h1>External URL: <a href="{{.UserData.SpotifyURL}}" target="_blank">{{.UserData.SpotifyURL}}</a></h1>
     <h1>Image URL:</h1>
-    <img src="{{.ImageURL}}" alt="User Image" style="width:150px; height:150px; border-radius:50%;">
-    <h1>User ID: {{.UserID}}</h1>
+    <img src="{{.UserData.ImageURL}}" alt="User Image" style="width:150px; height:150px; border-radius:50%;">
+    <h1>The artist you searched: {{.SignerData.Name}}</h1>
+    <h1>Artist ID: {{.SignerData.SignerID}}</h1>
 </body>
 </html>
