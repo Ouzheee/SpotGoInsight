@@ -66,6 +66,33 @@
         .btn-space {
             margin-right: 10px;
         }
+        .play-controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .control-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            background-color: black; /* 背景黑色 */
+            border: 2px solid white;
+            color: white;
+        }
+
+        .control-btn:hover {
+            background-color: white;
+            color: black;
+        }
+
+        .control-icon {
+            font-family: Arial, sans-serif;
+        }
     </style>
 </head>
 <body>
@@ -155,14 +182,54 @@
             </div>
         </div>
         <div class="play-controls">
-            <button class="btn btn-outline-light"><i class="bi bi-skip-backward-fill"></i></button>
-            <button class="btn btn-light"><i class="bi bi-play-fill"></i></button>
-            <button class="btn btn-outline-light"><i class="bi bi-skip-forward-fill"></i></button>
-        </div>
+            <button id="prev-song" class="btn btn-outline-light control-btn">
+                <span class="control-icon">&#9664;&#9664;</span>
+            </button>
+            <button id="play-pause" class="btn btn-light control-btn">
+                <span id="play-icon" class="control-icon">&#10073;&#10073;</span>
+            </button>
+            <button id="next-song" class="btn btn-outline-light control-btn">
+                <span class="control-icon">&#9654;&#9654;</span>
+            </button>
+        </div>        
     </div>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            let isPlaying = false;
+            const audio = new Audio('https://p.scdn.co/mp3-preview/82e442871e6afd7efa4410ca735b3b13644f5184?cid=cfe923b2d660439caf2b557b21f31221');
+            const playPauseBtn = document.getElementById('play-pause');
+            const playIcon = document.getElementById('play-icon');
+            const prevSongBtn = document.getElementById('prev-song');
+            const nextSongBtn = document.getElementById('next-song');
+    
+            playPauseBtn.addEventListener('click', function () {
+                if (isPlaying) {
+                    audio.pause();
+                    playIcon.innerHTML = '&#9654;'; // 變回播放圖示
+                } else {
+                    audio.play();
+                    playIcon.innerHTML = '&#10073;&#10073;'; // 暫停圖示
+                }
+                isPlaying = !isPlaying;
+            });
+    
+            prevSongBtn.addEventListener('click', function () {
+                console.log('前一首歌曲');
+            });
+    
+            nextSongBtn.addEventListener('click', function () {
+                console.log('下一首歌曲');
+            });
+    
+            audio.addEventListener('ended', function () {
+                playIcon.innerHTML = '&#9654;';
+                isPlaying = false;
+            });
+        });
+    </script>
 </body>
 </html>
 
