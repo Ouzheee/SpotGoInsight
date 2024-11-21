@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	clientID     = "592fa46f290e4f1aa8b5768bbb802177" // 替換為您的 Spotify Client ID
-	clientSecret = "4ddd10a13f2a4c00af97c1916b21a8c2" // 替換為您的 Spotify Client Secret
+	clientID     = "ab43d6c3cbdc479ca53096f213e19f2a" // 替換為您的 Spotify Client ID
+	clientSecret = "5e3c41d08b5f467799668a62b566aa18" // 替換為您的 Spotify Client Secret
 	redirectURI  = "http://localhost:8086/callback"   // 替換為您設定的 Redirect URI
 	artistName   = "King gnu"
 	//state        = "randomStateString"   // 隨機字串，用於防止 CSRF 攻擊
@@ -26,9 +26,16 @@ type user struct {
 }
 
 type signer struct {
-	SignerID string
-	Name     string
+	SignerID  string
+	Name      string
+	TopTracks []Track
 }
+type Track struct {
+	Name     string
+	URL      string
+	ImageURL string
+}
+
 type TemplateData struct {
 	UserData   user
 	SignerData signer
@@ -123,13 +130,12 @@ func startServer() {
 			log.Println(err)
 			return
 		}
-		topTracks, err := searchArtist(artistName, token.AccessToken)
+		err = searchArtist(artistName, token.AccessToken)
 		if err != nil {
 			log.Println("搜索歌手失敗:", err)
 			http.Error(w, "無法搜索歌手", http.StatusInternalServerError)
 			return
 		}
-		fmt.Println("熱門歌曲：", topTracks)
 
 		http.Redirect(w, r, "/userinfo", http.StatusSeeOther)
 		/*fmt.Fprintf(w, "Spotify API 呼叫成功！用戶資訊：%v", userInfo)
@@ -225,90 +231,105 @@ func getCurrentUserInfo(accessToken string) (map[string]interface{}, error) {
 	return userInfo, nil
 }
 
-func searchArtist(artistName string, accessToken string) ([]string, error) {
-	// 搜索歌手 API 的基礎 URL 和參數
+func searchArtist(artistName string, accessToken string) error {
+	// 搜索歌手 API 的基础 URL 和参数
 	baseSearchURL := "https://api.spotify.com/v1/search"
 	params := url.Values{}
 	params.Set("q", artistName)
 	params.Set("type", "artist")
 	params.Set("limit", "1")
 
-	// 構建搜索歌手的完整請求 URL
+	// 构建搜索歌手的完整请求 URL
 	searchURL := fmt.Sprintf("%s?%s", baseSearchURL, params.Encode())
 
-	// 建立 HTTP 請求
+	// 创建 HTTP 请求
 	req, err := http.NewRequest("GET", searchURL, nil)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	// 設置授權 Header
+	// 设置授权 Header
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 
-	// 發送搜索歌手的請求
+	// 发送搜索歌手的请求
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer resp.Body.Close()
 
-	// 確認搜索請求的回應狀態碼
+	// 确认搜索请求的响应状态码
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("搜索 API 請求失敗，狀態碼: %d", resp.StatusCode)
+		return fmt.Errorf("搜索 API 请求失败，状态码: %d", resp.StatusCode)
 	}
 
-	// 解析搜索結果，提取歌手 ID
+	// 解析搜索结果，提取歌手 ID
 	var searchResult map[string]interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&searchResult); err != nil {
-		return nil, err
+		return err
 	}
 
 	artists := searchResult["artists"].(map[string]interface{})
 	items := artists["items"].([]interface{})
 	if len(items) == 0 {
-		return nil, fmt.Errorf("未找到名為 '%s' 的歌手", artistName)
+		return fmt.Errorf("未找到名为 '%s' 的歌手", artistName)
 	}
 
 	artist := items[0].(map[string]interface{})
 	artistID := artist["id"].(string)
 
-	// 調用 Top Tracks API
+	// 调用 Top Tracks API
 	topTracksURL := fmt.Sprintf("https://api.spotify.com/v1/artists/%s/top-tracks?market=US", artistID)
 
 	req, err = http.NewRequest("GET", topTracksURL, nil)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 
-	// 發送請求獲取熱門歌曲
+	// 发送请求获取热门歌曲
 	resp, err = client.Do(req)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer resp.Body.Close()
 
-	// 確認熱門歌曲請求的回應狀態碼
+	// 确认热门歌曲请求的响应状态码
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Top Tracks API 請求失敗，狀態碼: %d", resp.StatusCode)
+		return fmt.Errorf("Top Tracks API 请求失败，状态码: %d", resp.StatusCode)
 	}
 
-	// 解析熱門歌曲結果
+	// 解析热门歌曲结果
 	var topTracksResult map[string]interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&topTracksResult); err != nil {
-		return nil, err
+		return err
 	}
 
 	tracks := topTracksResult["tracks"].([]interface{})
-	topTracks := []string{}
+	var topTracks []Track
+	fmt.Printf("熱門歌曲：")
 	for _, track := range tracks {
 		trackInfo := track.(map[string]interface{})
-		topTracks = append(topTracks, trackInfo["name"].(string))
+		trackName := trackInfo["name"].(string)
+		trackURL, _ := trackInfo["preview_urls"].(string)
+		trackImageURL := trackInfo["album"].(map[string]interface{})["images"].([]interface{})[0].(map[string]interface{})["url"].(string)
+
+		// 将歌曲信息加入到列表
+		topTracks = append(topTracks, Track{
+			Name:     trackName,
+			URL:      trackURL,
+			ImageURL: trackImageURL,
+		})
+		fmt.Printf(" %s", trackName)
 	}
+
+	// 将歌手信息和热门歌曲填充到 signerdata 中
 	signerdata.SignerID = artistID
 	signerdata.Name = artistName
-	return topTracks, nil
+	signerdata.TopTracks = topTracks
+
+	return nil
 }
 
 // Token 回應結構體
