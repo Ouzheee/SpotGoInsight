@@ -39,6 +39,16 @@ var albumList = []Album{
 		AudioURL:   "https://p.scdn.co/mp3-preview/82e442871e6afd7efa4410ca735b3b13644f5184",
 		ImageURL:   "https://i.scdn.co/image/ab67616d00001e02ff9ca10b55ce82ae553c8228",
 	},
+
+	{
+		ID:         2,
+		Name:       "陳庭毅真的很強",
+		Tracks:     11,
+		Year:       2020,
+		IsFavorite: false,
+		AudioURL:   "https://p.scdn.co/mp3-preview/104ad0ea32356b9f3b2e95a8610f504c90b0026b?cid=8897482848704f2a8f8d7c79726a70d4",
+		ImageURL:   "https://i.scdn.co/image/ab67616d00001e02ff9ca10b55ce82ae553c8228",
+	},
 }
 
 var singerList = []Singer{
@@ -232,6 +242,12 @@ func main() {
 			}
 		}
 		c.Redirect(http.StatusFound, "/singer")
+	})
+
+	r.GET("/favorite", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "favorite.html", gin.H{
+			"favorites": favoriteAlbums,
+		})
 	})
 
 	// Start the server
