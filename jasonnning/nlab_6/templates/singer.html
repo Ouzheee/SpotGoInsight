@@ -107,16 +107,30 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="/album">歌曲瀏覽</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/singer">歌手瀏覽</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/album">歌曲管理</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/singer">歌手管理</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/favorite">我的收藏</a></li>
                 </ul>
             </div>
         </div>
     </nav>
+       <!-- Add Singer Form -->
+
+    
 
     <div class="container my-5">
+        <div class="mt-5">
+            <h3>歌手查詢</h3>
+            <form action="/add/singer" method="POST">
+                <div class="mb-3">
+                    <label for="name" class="form-label">歌手名稱</label>
+                    <input type="text" class="form-control" id="name" name="name" required>
+                </div>
+                <button type="submit" class="btn btn-success">查詢</button>
+            </form>
+          </div>    
+      </div>
         <h1 class="text-center mb-4">歌手列表</h1>
-
         <!-- Display Singers -->
         <div class="row">
             {{range .singers}}
@@ -157,44 +171,8 @@
             {{end}}
         </div>
 
-        <!-- Add Singer Form -->
-        <div class="mt-5">
-            <h3>新增歌手</h3>
-            <form action="/add/singer" method="POST">
-                <div class="mb-3">
-                    <label for="name" class="form-label">歌手名稱</label>
-                    <input type="text" class="form-control" id="name" name="name" required>
-                </div>
-                <div class="mb-3">
-                    <label for="genre" class="form-label">音樂類型</label>
-                    <input type="text" class="form-control" id="genre" name="genre" required>
-                </div>
-                <button type="submit" class="btn btn-success">新增歌手</button>
-            </form>
-        </div>
-    </div>
+     
 
-    <!-- Footer -->
-    <div class="footer">
-        <div class="song-info">
-            <img src="https://via.placeholder.com/50" alt="Song Cover">
-            <div>
-                <h6>目前播放: <span id="current-song">暫無播放</span></h6>
-                <p class="text-muted" id="current-artist">歌手名稱</p>
-            </div>
-        </div>
-        <div class="play-controls">
-            <button id="prev-song" class="btn btn-outline-light control-btn">
-                <span class="control-icon">&#9664;&#9664;</span>
-            </button>
-            <button id="play-pause" class="btn btn-light control-btn">
-                <span id="play-icon" class="control-icon">&#10073;&#10073;</span>
-            </button>
-            <button id="next-song" class="btn btn-outline-light control-btn">
-                <span class="control-icon">&#9654;&#9654;</span>
-            </button>
-        </div>       
-    </div>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
