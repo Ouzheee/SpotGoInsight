@@ -30,10 +30,12 @@ type signer struct {
 	Name      string
 	TopTracks []Track
 }
+
 type Track struct {
-	Name     string
-	URL      string
-	ImageURL string
+	Name       string
+	URL        string
+	ImageURL   string
+	PreviewURL string
 }
 
 type TemplateData struct {
@@ -308,20 +310,19 @@ func searchArtist(artistName string, accessToken string) error {
 
 	tracks := topTracksResult["tracks"].([]interface{})
 	var topTracks []Track
-	fmt.Printf("熱門歌曲：")
 	for _, track := range tracks {
 		trackInfo := track.(map[string]interface{})
 		trackName := trackInfo["name"].(string)
-		trackURL, _ := trackInfo["preview_urls"].(string)
 		trackImageURL := trackInfo["album"].(map[string]interface{})["images"].([]interface{})[0].(map[string]interface{})["url"].(string)
+		previewURL, _ := trackInfo["preview_url"].(string) // 预览链接可能为 null，因此需要安全提取
 
 		// 将歌曲信息加入到列表
 		topTracks = append(topTracks, Track{
-			Name:     trackName,
-			URL:      trackURL,
-			ImageURL: trackImageURL,
+			Name:       trackName,
+			ImageURL:   trackImageURL,
+			PreviewURL: previewURL,
 		})
-		fmt.Printf(" %s", trackName)
+		fmt.Printf(" %s: %s\n", trackName, previewURL)
 	}
 
 	// 将歌手信息和热门歌曲填充到 signerdata 中
