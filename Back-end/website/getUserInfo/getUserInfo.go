@@ -252,7 +252,7 @@ func getCurrentUserInfo(accessToken string) (map[string]interface{}, error) {
 func searchArtist(artistName string, accessToken string) error {
 	// 確保 Token 有效
 	if err := ensureValidAccessToken(); err != nil {
-		return nil, err
+		return err
 	}
 	
 	// 搜索歌手 API 的基础 URL 和参数
