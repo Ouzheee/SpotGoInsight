@@ -115,21 +115,22 @@
         </div>
     </nav>
        <!-- Add Singer Form -->
-    <div class="mt-5">
-        <h3>歌手查詢</h3>
-        <form action="/add/singer" method="POST">
-            <div class="mb-3">
-                <label for="name" class="form-label">歌手名稱</label>
-                <input type="text" class="form-control" id="name" name="name" required>
-            </div>
-            <button type="submit" class="btn btn-success">查詢</button>
-        </form>
-    </div>    
-</div>
+
+    
 
     <div class="container my-5">
+        <div class="mt-5">
+            <h3>歌手查詢</h3>
+            <form action="/add/singer" method="POST">
+                <div class="mb-3">
+                    <label for="name" class="form-label">歌手名稱</label>
+                    <input type="text" class="form-control" id="name" name="name" required>
+                </div>
+                <button type="submit" class="btn btn-success">查詢</button>
+            </form>
+          </div>    
+      </div>
         <h1 class="text-center mb-4">歌手列表</h1>
-
         <!-- Display Singers -->
         <div class="row">
             {{range .singers}}
