@@ -123,13 +123,14 @@ func generateAuthURL() string {
 
 // 啟動伺服器，接收授權碼並交換 Token
 func startServer() {
+
+	http.HandleFunc("/userInfo", handler)
+	
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		authURL := generateAuthURL()
 		//fmt.Fprintf(w, "請點擊以下連結進行授權：<a href='%s'>Spotify 授權</a>", authURL)
 		http.Redirect(w, r, authURL, http.StatusSeeOther)
 	})
-
-	http.HandleFunc("/web", handler)
 
 	http.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
 		// 驗證 state
@@ -152,6 +153,7 @@ func startServer() {
 			return
 		}
 		processedRequests[code] = true
+		defer func() { delete(processedRequests, code) }()
 
 		// 使用授權碼交換 Token
 		token, err := exchangeCodeForToken(code)
@@ -213,7 +215,6 @@ func startServer() {
 			playlistdata.Name = playlistpointer.Name
 		}
 
-
 		// 新增 Tracks 到播放清單
 		err = addTracksToPlaylist(playlistdata.ID, trackURIs)
 		if err != nil {
@@ -222,8 +223,7 @@ func startServer() {
 			return
 		}
 
-
-		http.Redirect(w, r, "/web", http.StatusSeeOther)
+		http.Redirect(w, r, "/userInfo", http.StatusSeeOther)
 		/*fmt.Fprintf(w, "Spotify API 呼叫成功！用戶資訊：%v", userInfo)
 		fmt.Fprintf(w, "Signer ID API 呼叫成功！歌手 %s 的ID：%v", artistName, SignerID)*/
 	})
