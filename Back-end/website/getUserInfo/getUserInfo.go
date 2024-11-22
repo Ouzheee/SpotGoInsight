@@ -11,6 +11,14 @@ import (
 	"time"
 )
 
+//clientID
+//林亦潔 592fa46f290e4f1aa8b5768bbb802177
+//歐哲熏
+
+//clientSecret
+//林亦潔 4ddd10a13f2a4c00af97c1916b21a8c2
+//歐哲熏
+
 var (
 	clientID     = "ab43d6c3cbdc479ca53096f213e19f2a" // 替換為您的 Spotify Client ID
 	clientSecret = "5e3c41d08b5f467799668a62b566aa18" // 替換為您的 Spotify Client Secret
@@ -20,7 +28,7 @@ var (
 )
 
 var (
-	currentAccessToken string // 保存當前的 Access Token
+	currentAccessToken  string // 保存當前的 Access Token
 	currentRefreshToken string // 保存 Refresh Token
 	tokenExpiresAt      int64  // Access Token 過期的 Unix 時間戳
 )
@@ -254,7 +262,7 @@ func searchArtist(artistName string, accessToken string) error {
 	if err := ensureValidAccessToken(); err != nil {
 		return err
 	}
-	
+
 	// 搜索歌手 API 的基础 URL 和参数
 	baseSearchURL := "https://api.spotify.com/v1/search"
 	params := url.Values{}
