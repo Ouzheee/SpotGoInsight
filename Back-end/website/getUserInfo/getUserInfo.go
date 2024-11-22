@@ -20,9 +20,11 @@ import (
 //歐哲熏
 
 var (
-	clientID     = "592fa46f290e4f1aa8b5768bbb802177" // 替換為您的 Spotify Client ID
-	clientSecret = "4ddd10a13f2a4c00af97c1916b21a8c2" // 替換為您的 Spotify Client Secret
-	redirectURI  = "http://localhost:8086/callback"   // 替換為您設定的 Redirect URI
+	clientID     = "592fa46f290e4f1aa8b5768bbb802177"
+	clientSecret = "4ddd10a13f2a4c00af97c1916b21a8c2"
+	redirectURI  = "http://localhost:8086/callback"
+	// 向使用者要求的授權範圍
+	scope		 = "user-read-private user-read-email  user-top-read playlist-modify-public playlist-modify-private"
 	artistName   = "King gnu"
 	//state        = "randomStateString"   // 隨機字串，用於防止 CSRF 攻擊
 )
@@ -31,7 +33,14 @@ var (
 	currentAccessToken  string // 保存當前的 Access Token
 	currentRefreshToken string // 保存 Refresh Token
 	tokenExpiresAt      int64  // Access Token 過期的 Unix 時間戳
+	processedRequests = make(map[string]bool) // 紀錄處理過的授權碼
 )
+
+type TokenResponse struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	ExpiresIn    int    `json:"expires_in"`
+}
 
 type user struct {
 	Name       string
@@ -53,13 +62,28 @@ type Track struct {
 	PreviewURL string
 }
 
+type Playlist struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
 type TemplateData struct {
 	UserData   user
 	SignerData signer
+	PlaylistData Playlist
 }
 
 var userdata user
 var signerdata signer
+var playlistdata Playlist
+var playlistpointer *Playlist
+
+//要新增的tracks
+var trackURIs = []string{
+	"spotify:track:24ntZeyCrVePmN3nUYhfLx",
+	"spotify:track:1pCcNaCodPssCc8Aq68gPS",
+	"spotify:track:7kJBYHytiARJlRygfg5VCn",
+}
 
 // 連接html
 func handler(w http.ResponseWriter, r *http.Request) {
@@ -73,6 +97,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	data := TemplateData{
 		UserData:   userdata,
 		SignerData: signerdata,
+		PlaylistData: playlistdata,
 	}
 
 	err = temp.Execute(w, data)
@@ -91,7 +116,7 @@ func generateAuthURL() string {
 	params.Set("response_type", "code")
 	params.Set("redirect_uri", redirectURI)
 	//params.Set("state", state)
-	params.Set("scope", "user-read-private user-read-email  user-top-read") // 權限範圍
+	params.Set("scope", scope) // 權限範圍
 
 	return fmt.Sprintf("%s?%s", baseURL, params.Encode())
 }
@@ -104,7 +129,7 @@ func startServer() {
 		http.Redirect(w, r, authURL, http.StatusSeeOther)
 	})
 
-	http.HandleFunc("/userinfo", handler)
+	http.HandleFunc("/web", handler)
 
 	http.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
 		// 驗證 state
@@ -121,6 +146,13 @@ func startServer() {
 			return
 		}
 
+		// 防止重複處理請求
+		if processedRequests[code] {
+			http.Error(w, "請求已處理", http.StatusBadRequest)
+			return
+		}
+		processedRequests[code] = true
+
 		// 使用授權碼交換 Token
 		token, err := exchangeCodeForToken(code)
 		if err != nil {
@@ -130,20 +162,68 @@ func startServer() {
 		}
 
 		// 調用 Spotify API
+		// 1. get user information
 		_, err = getCurrentUserInfo(token.AccessToken)
 		if err != nil {
-			http.Error(w, "無法調用 UserInfo API", http.StatusInternalServerError)
-			log.Println(err)
+			log.Println("取得UserInfo失敗: ", err)
+			http.Error(w, "無法取得UserInfo", http.StatusInternalServerError)
 			return
 		}
+		// 2. serach artist and top tracks
 		err = searchArtist(artistName, token.AccessToken)
 		if err != nil {
 			log.Println("搜索歌手失敗:", err)
 			http.Error(w, "無法搜索歌手", http.StatusInternalServerError)
 			return
 		}
+		// 3. create playlist and add tracks
+		/*playlistpointer, err = createPlaylist(userdata.UserID, "我的收藏", "From SpotGoInsight")
+		if err != nil{
+			log.Println("新增播放清單失敗: ", err)
+			http.Error(w, "無法新增播放清單", http.StatusInternalServerError)
+			return
+		}
+		playlistdata.ID = playlistpointer.ID
+		playlistdata.Name = playlistpointer.Name
+		err = addTracksToPlaylist(playlistdata.ID, trackURIs)
+		if err != nil{
+			log.Println("新增歌曲到播放清單失敗: ", err)
+			http.Error(w, "無法新增歌曲到播放清單", http.StatusInternalServerError)
+			return
+		}*/
+		exists, playlistID, err := playlistExists(token.AccessToken, "我的收藏")
+		if err != nil {
+			log.Println("檢查播放清單失敗:", err)
+			http.Error(w, "檢查播放清單失敗", http.StatusInternalServerError)
+			return
+		}
 
-		http.Redirect(w, r, "/userinfo", http.StatusSeeOther)
+		if exists {
+			fmt.Println("播放清單已存在，ID:", playlistID)
+			playlistdata.ID = playlistID
+			playlistdata.Name = "我的收藏"
+		} else {
+			playlistpointer, err = createPlaylist(userdata.UserID, "我的收藏", "From SpotGoInsight")
+			if err != nil {
+				log.Println("新增播放清單失敗: ", err)
+				http.Error(w, "無法新增播放清單", http.StatusInternalServerError)
+				return
+			}
+			playlistdata.ID = playlistpointer.ID
+			playlistdata.Name = playlistpointer.Name
+		}
+
+
+		// 新增 Tracks 到播放清單
+		err = addTracksToPlaylist(playlistdata.ID, trackURIs)
+		if err != nil {
+			log.Println("新增歌曲到播放清單失敗: ", err)
+			http.Error(w, "無法新增歌曲到播放清單", http.StatusInternalServerError)
+			return
+		}
+
+
+		http.Redirect(w, r, "/web", http.StatusSeeOther)
 		/*fmt.Fprintf(w, "Spotify API 呼叫成功！用戶資訊：%v", userInfo)
 		fmt.Fprintf(w, "Signer ID API 呼叫成功！歌手 %s 的ID：%v", artistName, SignerID)*/
 	})
@@ -293,12 +373,7 @@ func getCurrentUserInfo(accessToken string) (map[string]interface{}, error) {
 		return nil, err
 	}
 
-	//test print
-	handleUserInfo(userInfo)
-
-	return userInfo, nil
-}
-func handleUserInfo(userInfo map[string]interface{}) {
+	//arrange userinfo
 	externalUrls := userInfo["external_urls"].(map[string]interface{})
 	images := userInfo["images"].([]interface{})
 
@@ -308,6 +383,8 @@ func handleUserInfo(userInfo map[string]interface{}) {
 		ImageURL:   images[0].(map[string]interface{})["url"].(string),
 		UserID:     userInfo["id"].(string),
 	}
+
+	return userInfo, nil
 }
 
 // API: search artist
@@ -346,7 +423,7 @@ func searchArtist(artistName string, accessToken string) error {
 
 	// 确认搜索请求的响应状态码
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("搜索 API 请求失败，状态码: %d", resp.StatusCode)
+		return fmt.Errorf("搜索 API 請求失敗，狀態碼: %d", resp.StatusCode)
 	}
 
 	// 解析搜索结果，提取歌手 ID
@@ -416,12 +493,133 @@ func searchArtist(artistName string, accessToken string) error {
 	return nil
 }
 
-// Token response
-type TokenResponse struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
-	ExpiresIn    int    `json:"expires_in"`
+// API: create playlist
+func createPlaylist(userID string, playlistName, playlistDescription string) (*Playlist, error) {
+	// 確保 Access Token 有效
+	if err := ensureValidAccessToken(); err != nil {
+		return nil, err
+	}
+
+	// 建立請求資料
+	data := map[string]interface{}{
+		"name":        playlistName,           // 播放清單名稱
+		"description": playlistDescription,    // 播放清單描述
+		"public":      false,                  // 設置為私人播放清單(true: public playlist)
+	}
+	// 將資料轉換為 JSON 格式
+	body, _ := json.Marshal(data)
+
+	// 構建 POST 請求 URL
+	url := fmt.Sprintf("https://api.spotify.com/v1/users/%s/playlists", userID)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(body)) // 傳送 JSON 資料
+	if err != nil {
+		return nil, err
+	}
+
+	// 設置請求標頭
+	req.Header.Set("Authorization", "Bearer "+currentAccessToken) // 使用 Bearer Token 認證
+	req.Header.Set("Content-Type", "application/json")            // 指定內容類型為 JSON
+
+	// 創建 HTTP 客戶端並發送請求
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close() // 確保回應主體在函數結束前關閉
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		return nil, fmt.Errorf("failed to create playlist, status: %d", resp.StatusCode)
+	}
+
+	// 解析回應資料到 Playlist 結構
+	var playlist Playlist
+	if err := json.NewDecoder(resp.Body).Decode(&playlist); err != nil {
+		return nil, err
+	}
+
+	log.Println("已新增播放清單")
+	return &playlist, nil
 }
+
+// API: add Tracks To Playlist
+func addTracksToPlaylist(playlistID string, trackURIs []string) error {
+	// 確保 Access Token 有效
+	if err := ensureValidAccessToken(); err != nil {
+		return err
+	}
+
+	// 建立請求資料
+	data := map[string]interface{}{
+		"uris": trackURIs, // 包含 Tracks URI 的陣列
+	}
+	// 將資料轉換為 JSON 格式
+	body, _ := json.Marshal(data)
+
+	// 構建 POST 請求 URL
+	url := fmt.Sprintf("https://api.spotify.com/v1/playlists/%s/tracks", playlistID)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(body)) // 傳送 JSON 資料
+	if err != nil {
+		return err 
+	}
+
+	// 設置請求標頭
+	req.Header.Set("Authorization", "Bearer "+currentAccessToken) // 使用 Bearer Token 認證
+	req.Header.Set("Content-Type", "application/json")            // 指定內容類型為 JSON
+
+	// 創建 HTTP 客戶端並發送請求
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close() // 確保回應主體在函數結束前關閉
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		return fmt.Errorf("failed to add tracks, status: %d", resp.StatusCode)
+	}
+
+	return nil
+}
+
+// check if playlist exists
+func playlistExists(accessToken, playlistName string) (bool, string, error) {
+    req, err := http.NewRequest("GET", "https://api.spotify.com/v1/me/playlists", nil)
+    if err != nil {
+        return false, "", err
+    }
+    req.Header.Set("Authorization", "Bearer "+accessToken)
+
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil {
+        return false, "", err
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode != http.StatusOK {
+        return false, "", fmt.Errorf("failed to fetch playlists, status: %d", resp.StatusCode)
+    }
+
+    var playlists struct {
+        Items []struct {
+            ID   string `json:"id"`
+            Name string `json:"name"`
+        } `json:"items"`
+    }
+    if err := json.NewDecoder(resp.Body).Decode(&playlists); err != nil {
+        return false, "", err
+    }
+
+    for _, playlist := range playlists.Items {
+        if playlist.Name == playlistName {
+            return true, playlist.ID, nil
+        }
+    }
+
+    return false, "", nil
+}
+
 
 func main() {
 	startServer()
