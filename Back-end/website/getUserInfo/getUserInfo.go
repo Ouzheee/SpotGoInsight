@@ -20,8 +20,8 @@ import (
 //歐哲熏
 
 var (
-	clientID     = "ab43d6c3cbdc479ca53096f213e19f2a" // 替換為您的 Spotify Client ID
-	clientSecret = "5e3c41d08b5f467799668a62b566aa18" // 替換為您的 Spotify Client Secret
+	clientID     = "592fa46f290e4f1aa8b5768bbb802177" // 替換為您的 Spotify Client ID
+	clientSecret = "4ddd10a13f2a4c00af97c1916b21a8c2" // 替換為您的 Spotify Client Secret
 	redirectURI  = "http://localhost:8086/callback"   // 替換為您設定的 Redirect URI
 	artistName   = "King gnu"
 	//state        = "randomStateString"   // 隨機字串，用於防止 CSRF 攻擊
@@ -61,18 +61,7 @@ type TemplateData struct {
 var userdata user
 var signerdata signer
 
-func getUserInfo(userInfo map[string]interface{}) {
-	externalUrls := userInfo["external_urls"].(map[string]interface{})
-	images := userInfo["images"].([]interface{})
-
-	userdata = user{
-		Name:       userInfo["display_name"].(string),
-		SpotifyURL: externalUrls["spotify"].(string),
-		ImageURL:   images[0].(map[string]interface{})["url"].(string),
-		UserID:     userInfo["id"].(string),
-	}
-}
-
+// 連接html
 func handler(w http.ResponseWriter, r *http.Request) {
 	temp, err := template.ParseFiles("userInfo.html")
 	if err != nil {
@@ -212,7 +201,60 @@ func exchangeCodeForToken(code string) (*TokenResponse, error) {
 	return &tokenResponse, nil
 }
 
-// 調用 Spotify API 獲取當前用戶資訊
+// refresh token
+func refreshAccessToken(refreshToken string) (string, int64, error) {
+	data := url.Values{}
+	data.Set("grant_type", "refresh_token")
+	data.Set("refresh_token", refreshToken)
+
+	req, err := http.NewRequest("POST", "https://accounts.spotify.com/api/token", bytes.NewBufferString(data.Encode()))
+	if err != nil {
+		return "", 0, err
+	}
+
+	req.SetBasicAuth(clientID, clientSecret)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", 0, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", 0, fmt.Errorf("Token 刷新失敗，狀態碼: %d", resp.StatusCode)
+	}
+
+	var response TokenResponse
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	if err != nil {
+		return "", 0, err
+	}
+
+	newExpiresAt := time.Now().Unix() + int64(response.ExpiresIn)
+	return response.AccessToken, newExpiresAt, nil
+}
+
+// ensure token valid
+func ensureValidAccessToken() error {
+	// 如果 Access Token 已過期，刷新它
+	if time.Now().Unix() >= tokenExpiresAt {
+		fmt.Println("Access Token 過期，正在刷新...")
+		newToken, newExpiresAt, err := refreshAccessToken(currentRefreshToken)
+		if err != nil {
+			return fmt.Errorf("刷新 Token 失敗: %v", err)
+		}
+
+		// 更新全局變數
+		currentAccessToken = newToken
+		tokenExpiresAt = newExpiresAt
+		fmt.Println("Access Token 已刷新")
+	}
+	return nil
+}
+
+// API: get user information
 func getCurrentUserInfo(accessToken string) (map[string]interface{}, error) {
 	// 確保 Token 有效
 	if err := ensureValidAccessToken(); err != nil {
@@ -252,11 +294,23 @@ func getCurrentUserInfo(accessToken string) (map[string]interface{}, error) {
 	}
 
 	//test print
-	getUserInfo(userInfo)
+	handleUserInfo(userInfo)
 
 	return userInfo, nil
 }
+func handleUserInfo(userInfo map[string]interface{}) {
+	externalUrls := userInfo["external_urls"].(map[string]interface{})
+	images := userInfo["images"].([]interface{})
 
+	userdata = user{
+		Name:       userInfo["display_name"].(string),
+		SpotifyURL: externalUrls["spotify"].(string),
+		ImageURL:   images[0].(map[string]interface{})["url"].(string),
+		UserID:     userInfo["id"].(string),
+	}
+}
+
+// API: search artist
 func searchArtist(artistName string, accessToken string) error {
 	// 確保 Token 有效
 	if err := ensureValidAccessToken(); err != nil {
@@ -362,58 +416,7 @@ func searchArtist(artistName string, accessToken string) error {
 	return nil
 }
 
-func refreshAccessToken(refreshToken string) (string, int64, error) {
-	data := url.Values{}
-	data.Set("grant_type", "refresh_token")
-	data.Set("refresh_token", refreshToken)
-
-	req, err := http.NewRequest("POST", "https://accounts.spotify.com/api/token", bytes.NewBufferString(data.Encode()))
-	if err != nil {
-		return "", 0, err
-	}
-
-	req.SetBasicAuth(clientID, clientSecret)
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", 0, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return "", 0, fmt.Errorf("Token 刷新失敗，狀態碼: %d", resp.StatusCode)
-	}
-
-	var response TokenResponse
-	err = json.NewDecoder(resp.Body).Decode(&response)
-	if err != nil {
-		return "", 0, err
-	}
-
-	newExpiresAt := time.Now().Unix() + int64(response.ExpiresIn)
-	return response.AccessToken, newExpiresAt, nil
-}
-
-func ensureValidAccessToken() error {
-	// 如果 Access Token 已過期，刷新它
-	if time.Now().Unix() >= tokenExpiresAt {
-		fmt.Println("Access Token 過期，正在刷新...")
-		newToken, newExpiresAt, err := refreshAccessToken(currentRefreshToken)
-		if err != nil {
-			return fmt.Errorf("刷新 Token 失敗: %v", err)
-		}
-
-		// 更新全局變數
-		currentAccessToken = newToken
-		tokenExpiresAt = newExpiresAt
-		fmt.Println("Access Token 已刷新")
-	}
-	return nil
-}
-
-// Token 回應結構體
+// Token response
 type TokenResponse struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
