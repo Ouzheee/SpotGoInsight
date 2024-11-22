@@ -11,20 +11,37 @@ import (
 	"time"
 )
 
+//clientID
+//林亦潔 592fa46f290e4f1aa8b5768bbb802177
+//歐哲熏
+
+//clientSecret
+//林亦潔 4ddd10a13f2a4c00af97c1916b21a8c2
+//歐哲熏
+
 var (
-	clientID     = "ab43d6c3cbdc479ca53096f213e19f2a" // 替換為您的 Spotify Client ID
-	clientSecret = "5e3c41d08b5f467799668a62b566aa18" // 替換為您的 Spotify Client Secret
-	redirectURI  = "http://localhost:8086/callback"   // 替換為您設定的 Redirect URI
+	clientID     = "592fa46f290e4f1aa8b5768bbb802177"
+	clientSecret = "4ddd10a13f2a4c00af97c1916b21a8c2"
+	redirectURI  = "http://localhost:8086/callback"
+	// 向使用者要求的授權範圍
+	scope		 = "user-read-private user-read-email  user-top-read playlist-modify-public playlist-modify-private"
 	ARTISTNAME   = "King gnu"
 	TRACKNAME    = "Supernova"
 	//state        = "randomStateString"   // 隨機字串，用於防止 CSRF 攻擊
 )
 
 var (
-	currentAccessToken  string // 保存當前的 Access Token
+	currentAccessToken   string // 保存當前的 Access Token
 	currentRefreshToken string // 保存 Refresh Token
 	tokenExpiresAt      int64  // Access Token 過期的 Unix 時間戳
+	processedRequests = make(map[string]bool) // 紀錄處理過的授權碼
 )
+
+type TokenResponse struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	ExpiresIn    int    `json:"expires_in"`
+}
 
 type User struct {
 	Name       string
@@ -44,32 +61,33 @@ type Track struct {
 	URL        string
 	ImageURL   string
 	PreviewURL string
-	ID         string
-	Album      Album
-}
-
-type Album struct {
-	ID           string
-	Name         string
-	Release_date string
-	Total_teacks int
 }
 
 type TemplateData struct {
-	UserData        User
-	SignerData      Signer
+	UserData   User
+	SignerData Signer
+	PlaylistData Playlist
 	SearchTrackData Track
 }
 
-var userdata User
-var testGetTracks Track
-var signerdata Signer
+var userdata user
+var signerdata signer
+var playlistdata Playlist
+var playlistpointer *Playlist
 
+//要新增的tracks
+var trackURIs = []string{
+	"spotify:track:24ntZeyCrVePmN3nUYhfLx",
+	"spotify:track:1pCcNaCodPssCc8Aq68gPS",
+	"spotify:track:7kJBYHytiARJlRygfg5VCn",
+}
+
+// 連接html
 func getUserInfo(userInfo map[string]interface{}) {
 	externalUrls := userInfo["external_urls"].(map[string]interface{})
 	images := userInfo["images"].([]interface{})
 
-	userdata = User{
+	userdata = user{
 		Name:       userInfo["display_name"].(string),
 		SpotifyURL: externalUrls["spotify"].(string),
 		ImageURL:   images[0].(map[string]interface{})["url"].(string),
@@ -89,6 +107,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		UserData:        userdata,
 		SignerData:      signerdata,
 		SearchTrackData: testGetTracks,
+		PlaylistData: playlistdata,
 	}
 
 	err = temp.Execute(w, data)
@@ -107,20 +126,21 @@ func generateAuthURL() string {
 	params.Set("response_type", "code")
 	params.Set("redirect_uri", redirectURI)
 	//params.Set("state", state)
-	params.Set("scope", "user-read-private user-read-email  user-top-read") // 權限範圍
+	params.Set("scope", scope) // 權限範圍
 
 	return fmt.Sprintf("%s?%s", baseURL, params.Encode())
 }
 
 // 啟動伺服器，接收授權碼並交換 Token
 func startServer() {
+
+	http.HandleFunc("/userinfo", handler)
+	
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		authURL := generateAuthURL()
 		//fmt.Fprintf(w, "請點擊以下連結進行授權：<a href='%s'>Spotify 授權</a>", authURL)
 		http.Redirect(w, r, authURL, http.StatusSeeOther)
 	})
-
-	http.HandleFunc("/userinfo", handler)
 
 	http.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
 		// 驗證 state
@@ -137,6 +157,14 @@ func startServer() {
 			return
 		}
 
+		// 防止重複處理請求
+		if processedRequests[code] {
+			http.Error(w, "請求已處理", http.StatusBadRequest)
+			return
+		}
+		processedRequests[code] = true
+		defer func() { delete(processedRequests, code) }()
+
 		// 使用授權碼交換 Token
 		token, err := exchangeCodeForToken(code)
 		if err != nil {
@@ -146,16 +174,62 @@ func startServer() {
 		}
 
 		// 調用 Spotify API
+		// 1. get user information
 		_, err = getCurrentUserInfo(token.AccessToken)
 		if err != nil {
-			http.Error(w, "無法調用 UserInfo API", http.StatusInternalServerError)
-			log.Println(err)
+			log.Println("取得UserInfo失敗: ", err)
+			http.Error(w, "無法取得UserInfo", http.StatusInternalServerError)
 			return
 		}
+		// 2. serach artist and top tracks
 		err = searchArtist(ARTISTNAME, token.AccessToken)
 		if err != nil {
 			log.Println("搜索歌手失敗:", err)
 			http.Error(w, "無法搜索歌手", http.StatusInternalServerError)
+			return
+		}
+		// 3. create playlist and add tracks
+		/*playlistpointer, err = createPlaylist(userdata.UserID, "我的收藏", "From SpotGoInsight")
+		if err != nil{
+			log.Println("新增播放清單失敗: ", err)
+			http.Error(w, "無法新增播放清單", http.StatusInternalServerError)
+			return
+		}
+		playlistdata.ID = playlistpointer.ID
+		playlistdata.Name = playlistpointer.Name
+		err = addTracksToPlaylist(playlistdata.ID, trackURIs)
+		if err != nil{
+			log.Println("新增歌曲到播放清單失敗: ", err)
+			http.Error(w, "無法新增歌曲到播放清單", http.StatusInternalServerError)
+			return
+		}*/
+		exists, playlistID, err := playlistExists(token.AccessToken, "我的收藏")
+		if err != nil {
+			log.Println("檢查播放清單失敗:", err)
+			http.Error(w, "檢查播放清單失敗", http.StatusInternalServerError)
+			return
+		}
+
+		if exists {
+			fmt.Println("播放清單已存在，ID:", playlistID)
+			playlistdata.ID = playlistID
+			playlistdata.Name = "我的收藏"
+		} else {
+			playlistpointer, err = createPlaylist(userdata.UserID, "我的收藏", "From SpotGoInsight")
+			if err != nil {
+				log.Println("新增播放清單失敗: ", err)
+				http.Error(w, "無法新增播放清單", http.StatusInternalServerError)
+				return
+			}
+			playlistdata.ID = playlistpointer.ID
+			playlistdata.Name = playlistpointer.Name
+		}
+
+		// 新增 Tracks 到播放清單
+		err = addTracksToPlaylist(playlistdata.ID, trackURIs)
+		if err != nil {
+			log.Println("新增歌曲到播放清單失敗: ", err)
+			http.Error(w, "無法新增歌曲到播放清單", http.StatusInternalServerError)
 			return
 		}
 		err = searchTrack(TRACKNAME, token.AccessToken, &testGetTracks)
@@ -222,7 +296,60 @@ func exchangeCodeForToken(code string) (*TokenResponse, error) {
 	return &tokenResponse, nil
 }
 
-// 調用 Spotify API 獲取當前用戶資訊
+// refresh token
+func refreshAccessToken(refreshToken string) (string, int64, error) {
+	data := url.Values{}
+	data.Set("grant_type", "refresh_token")
+	data.Set("refresh_token", refreshToken)
+
+	req, err := http.NewRequest("POST", "https://accounts.spotify.com/api/token", bytes.NewBufferString(data.Encode()))
+	if err != nil {
+		return "", 0, err
+	}
+
+	req.SetBasicAuth(clientID, clientSecret)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", 0, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", 0, fmt.Errorf("Token 刷新失敗，狀態碼: %d", resp.StatusCode)
+	}
+
+	var response TokenResponse
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	if err != nil {
+		return "", 0, err
+	}
+
+	newExpiresAt := time.Now().Unix() + int64(response.ExpiresIn)
+	return response.AccessToken, newExpiresAt, nil
+}
+
+// ensure token valid
+func ensureValidAccessToken() error {
+	// 如果 Access Token 已過期，刷新它
+	if time.Now().Unix() >= tokenExpiresAt {
+		fmt.Println("Access Token 過期，正在刷新...")
+		newToken, newExpiresAt, err := refreshAccessToken(currentRefreshToken)
+		if err != nil {
+			return fmt.Errorf("刷新 Token 失敗: %v", err)
+		}
+
+		// 更新全局變數
+		currentAccessToken = newToken
+		tokenExpiresAt = newExpiresAt
+		fmt.Println("Access Token 已刷新")
+	}
+	return nil
+}
+
+// API: get user information
 func getCurrentUserInfo(accessToken string) (map[string]interface{}, error) {
 	// 確保 Token 有效
 	if err := ensureValidAccessToken(); err != nil {
@@ -261,17 +388,27 @@ func getCurrentUserInfo(accessToken string) (map[string]interface{}, error) {
 		return nil, err
 	}
 
-	//test print
-	getUserInfo(userInfo)
+	//arrange userinfo
+	externalUrls := userInfo["external_urls"].(map[string]interface{})
+	images := userInfo["images"].([]interface{})
+
+	userdata = User{
+		Name:       userInfo["display_name"].(string),
+		SpotifyURL: externalUrls["spotify"].(string),
+		ImageURL:   images[0].(map[string]interface{})["url"].(string),
+		UserID:     userInfo["id"].(string),
+	}
 
 	return userInfo, nil
 }
 
+// API: search artist
 func searchArtist(ARTISTNAME string, accessToken string) error {
 	// 確保 Token 有效
 	if err := ensureValidAccessToken(); err != nil {
 		return err
 	}
+
 
 	// 搜索歌手 API 的基础 URL 和参数
 	baseSearchURL := "https://api.spotify.com/v1/search"
@@ -302,7 +439,7 @@ func searchArtist(ARTISTNAME string, accessToken string) error {
 
 	// 确认搜索请求的响应状态码
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("搜索 API 请求失败，状态码: %d", resp.StatusCode)
+		return fmt.Errorf("搜索 API 請求失敗，狀態碼: %d", resp.StatusCode)
 	}
 
 	// 解析搜索结果，提取歌手 ID
@@ -372,55 +509,38 @@ func searchArtist(ARTISTNAME string, accessToken string) error {
 	return nil
 }
 
-func refreshAccessToken(refreshToken string) (string, int64, error) {
-	data := url.Values{}
-	data.Set("grant_type", "refresh_token")
-	data.Set("refresh_token", refreshToken)
 
-	req, err := http.NewRequest("POST", "https://accounts.spotify.com/api/token", bytes.NewBufferString(data.Encode()))
-	if err != nil {
-		return "", 0, err
-	}
+	/*req.SetBasicAuth(clientID, clientSecret)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")*/
 
-	req.SetBasicAuth(clientID, clientSecret)
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil {
+        return false, "", err
+    }
+    defer resp.Body.Close()
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", 0, err
-	}
-	defer resp.Body.Close()
+    if resp.StatusCode != http.StatusOK {
+        return false, "", fmt.Errorf("failed to fetch playlists, status: %d", resp.StatusCode)
+    }
 
-	if resp.StatusCode != http.StatusOK {
-		return "", 0, fmt.Errorf("Token 刷新失敗，狀態碼: %d", resp.StatusCode)
-	}
+    var playlists struct {
+        Items []struct {
+            ID   string `json:"id"`
+            Name string `json:"name"`
+        } `json:"items"`
+    }
+    if err := json.NewDecoder(resp.Body).Decode(&playlists); err != nil {
+        return false, "", err
+    }
 
-	var response TokenResponse
-	err = json.NewDecoder(resp.Body).Decode(&response)
-	if err != nil {
-		return "", 0, err
-	}
+    for _, playlist := range playlists.Items {
+        if playlist.Name == playlistName {
+            return true, playlist.ID, nil
+        }
+    }
 
-	newExpiresAt := time.Now().Unix() + int64(response.ExpiresIn)
-	return response.AccessToken, newExpiresAt, nil
-}
-
-func ensureValidAccessToken() error {
-	// 如果 Access Token 已過期，刷新它
-	if time.Now().Unix() >= tokenExpiresAt {
-		fmt.Println("Access Token 過期，正在刷新...")
-		newToken, newExpiresAt, err := refreshAccessToken(currentRefreshToken)
-		if err != nil {
-			return fmt.Errorf("刷新 Token 失敗: %v", err)
-		}
-
-		// 更新全局變數
-		currentAccessToken = newToken
-		tokenExpiresAt = newExpiresAt
-		fmt.Println("Access Token 已刷新")
-	}
-	return nil
+    return false, "", nil
 }
 
 func searchTrack(trackName string, accessToken string, inputTracks *Track) error {
@@ -524,13 +644,6 @@ func searchTrack(trackName string, accessToken string, inputTracks *Track) error
 	fmt.Printf("\nSearch result:  TestgetTracks trackname: %s   trackURL: %s  trackID: %s  trackPreview: %s\n", testGetTracks.Name, testGetTracks.URL, testGetTracks.ID, testGetTracks.PreviewURL)
 	fmt.Printf(" Album name: %s  Album release date: %s  the signer is %s\n", inputTracks.Album.Name, inputTracks.Album.Release_date, sign_name) //測試專輯的使用
 	return nil
-}
-
-// Token 回應結構體
-type TokenResponse struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
-	ExpiresIn    int    `json:"expires_in"`
 }
 
 func main() {
