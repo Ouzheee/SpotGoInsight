@@ -17,6 +17,13 @@ type Album struct {
 	ImageURL   string `json:"image_url"`
 }
 
+type User struct {
+	ID           int    `json:"id"`
+	ClientID     string `json:"client_id"`
+	ClientSecret string `json:"client_secret"`
+	UserName     string `json:"user_name"`
+}
+
 type Singer struct {
 	ID         int    `json:"id"`
 	Name       string `json:"name"`
@@ -62,8 +69,45 @@ var singerList = []Singer{
 	},
 }
 
+var users = []User{
+	{
+		ID:           1,
+		ClientID:     "jason",
+		ClientSecret: "it's a secret",
+		UserName:     "jasonnning",
+	},
+}
+
+var maxUserID = 0
+
+var ex_user = User{
+	ID:           1,
+	ClientID:     "jason",
+	ClientSecret: "it's a secret",
+	UserName:     "jasonnning",
+}
+
 var favoriteAlbums []Album
 var favoriteSingers []Singer
+
+func getCurrentUser(c *gin.Context) *User {
+	// 從 cookie 中獲取 user_id
+	userID, err := c.Cookie("id")
+	if err != nil {
+		return &ex_user // 如果 cookie 不存在，表示未登入
+	}
+
+	// 將 userID 轉換為整數
+	id, _ := strconv.Atoi(userID)
+
+	// 根據 userID 查找用戶
+	for _, user := range users {
+		if user.ID == id {
+			return &user // 返回對應的用戶
+		}
+	}
+	return &ex_user
+}
 
 func main() {
 	r := gin.Default()
@@ -247,6 +291,108 @@ func main() {
 	r.GET("/favorite", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "favorite.html", gin.H{
 			"favorites": favoriteAlbums,
+		})
+	})
+
+	/*r.GET("/user", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "user.html", nil)
+	})*/
+	r.POST("/login", func(c *gin.Context) {
+		username := c.PostForm("username")
+		clientID := c.PostForm("client_id")
+		clientSecret := c.PostForm("client_secret")
+
+		// 是否是註冊新用戶
+		isRegister := clientID != "" && clientSecret != ""
+
+		if isRegister {
+			// 檢查用戶是否已存在
+			for _, user := range users {
+				if user.UserName == username {
+					c.JSON(http.StatusConflict, gin.H{"message": "User already exists"})
+					return
+				}
+			}
+			// 註冊新用戶
+			maxUserID++
+			newUser := User{
+				ID:           maxUserID,
+				ClientID:     clientID,
+				ClientSecret: clientSecret,
+				UserName:     username,
+			}
+			users = append(users, newUser)
+
+			// 設置當前用戶在 context 中
+			c.Set("user_id", newUser.ID)
+
+			// 重定向到歌手頁面
+			c.Redirect(http.StatusFound, "/singer")
+			return
+		}
+
+		// 登入驗證
+		for _, user := range users {
+			if user.UserName == username {
+				// 設置當前用戶在 context 中
+				c.Set("user_id", user.ID)
+
+				// 重定向到歌手頁面
+				c.Redirect(http.StatusFound, "/singer")
+				return
+			}
+		}
+
+		// 用戶不存在
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "User not found"})
+	})
+
+	r.POST("/register", func(c *gin.Context) {
+		clientID := c.PostForm("client_id")
+		clientSecret := c.PostForm("client_secret")
+		userName := c.PostForm("username")
+
+		// 驗證輸入是否有效
+		if clientID == "" || clientSecret == "" || userName == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "All fields are required"})
+			return
+		}
+
+		// 新增到使用者清單
+		maxUserID++
+		newUser := User{
+			ID:           maxUserID,
+			ClientID:     clientID,
+			ClientSecret: clientSecret,
+			UserName:     userName,
+		}
+		users = append(users, newUser)
+
+		c.Redirect(http.StatusFound, "/user")
+
+	})
+
+	// Register Page
+	r.GET("/register", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "register.html", nil)
+	})
+
+	r.GET("/user", func(c *gin.Context) {
+		// 確認用戶是否已經登入
+		currentUser := getCurrentUser(c)
+
+		if currentUser == nil {
+			// 如果沒有登入，則提示或重定向到登入頁面
+			c.JSON(http.StatusUnauthorized, gin.H{"message": "No user logged in"})
+			return
+		}
+
+		// 如果用戶已登錄，顯示 user.html 並傳遞用戶資料
+		c.HTML(http.StatusOK, "user.html", gin.H{
+			"user_id":       currentUser.ID,
+			"user_name":     currentUser.UserName,
+			"client_id":     currentUser.ClientID,
+			"client_secret": currentUser.ClientSecret,
 		})
 	})
 

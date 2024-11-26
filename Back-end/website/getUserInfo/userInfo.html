@@ -24,7 +24,16 @@
         {{end}}
     </ul>
 
-    <h1>播放清單名稱: {{.PlaylistData.Name}}</h1>
-    <h1><a href="https://open.spotify.com/playlist/{{.PlaylistData.ID}}" target="_blank">播放清單連結</a></h1>
+    <h1>Search Tracks: {{.SearchTrackData.Name}}</h1>
+        <li style="margin-bottom: 20px;">
+            <img src="{{.SearchTrackData.ImageURL}}" alt="{{.SearchTrackData.Name}}" style="width:100px; height:100px; margin-right: 10px; vertical-align: middle;">
+            <a href="{{.SearchTrackData.PreviewURL}}" target="_blank" style="font-size: 18px; vertical-align: middle;">{{.SearchTrackData.Name}}</a>
+        </li>
+    <h1>Search Track Album Information</h1>
+    <ul>
+        <li>Album Name: {{.SearchTrackData.Album.Name}}</li>
+        <li>Album ID: {{.SearchTrackData.Album.ID}}</li>
+    </ul>
+        
 </body>
 </html>

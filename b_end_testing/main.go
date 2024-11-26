@@ -32,9 +32,9 @@ func main() {
 
 // 首頁處理：引導使用者到 Spotify 授權頁面
 func handleIndex(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Redirecting user to Spotify login page")
 	authURL := fmt.Sprintf("%s?client_id=%s&response_type=code&redirect_uri=%s&scope=%s&state=%s",
 		authURL, clientID, url.QueryEscape(redirectURI), url.QueryEscape(scope), state)
-
 	http.Redirect(w, r, authURL, http.StatusFound)
 }
 
