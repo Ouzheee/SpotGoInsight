@@ -405,6 +405,8 @@ func getCurrentUserInfo(accessToken string) (map[string]interface{}, error) {
 
 // API: search artist
 func searchArtist(ARTISTNAME string, accessToken string) error {
+	fmt.Println("---search---")
+	
 	// 確保 Token 有效
 	if err := ensureValidAccessToken(); err != nil {
 		return err

@@ -25,6 +25,7 @@ type User2 struct {
 
 type Singer2 struct {
 	ID         int    `json:"id"`
+	SingerID   string `json:"singerid"`
 	Name       string `json:"name"`
 	Genre      string `json:"genre"`
 	IsFavorite bool   `json:"is_favorite"`
@@ -84,6 +85,8 @@ func main() {
 	r.LoadHTMLGlob("templates/*")
 
 	fmt.Println("伺服器啟動於 http://localhost:8080")
+	fmt.Println("cliend id: 592fa46f290e4f1aa8b5768bbb802177")
+	fmt.Println("cliend secret: 4ddd10a13f2a4c00af97c1916b21a8c2")
 
 	/*================================進入網頁URL指令==================================*/
 	// Main Menu page
@@ -165,14 +168,26 @@ func main() {
 	// Add Singer
 	r.POST("/add/singer", func(c *gin.Context) {
 		name := c.PostForm("name")
-		genre := c.PostForm("genre")
-		if name == "" || genre == "" {
+		if name == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid input"})
+			return
+		}
+		fmt.Println("enter name: ", name)
+
+		ARTISTNAME = name
+		err := searchArtist(ARTISTNAME, token.AccessToken)
+		if err != nil {
+			log.Println("搜索歌手失敗:", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "無法搜索歌手"})
 			return
 		}
 
 		maxSingerID++
-		newSinger := Singer2{ID: maxSingerID, Name: name, Genre: genre}
+		newSinger := Singer2{
+			SingerID: singerdata.SingerID, 
+			Name: singerdata.Name, 
+		}
+		fmt.Println("singerID: ", singerdata.SingerID)
 		singerList = append(singerList, newSinger)
 
 		c.Redirect(http.StatusFound, "/singer")
@@ -316,7 +331,7 @@ func main() {
 		//授權畫面
 		authURL := generateAuthURL()
 		fmt.Println("authURL: ", authURL)
-		c.Redirect(http.StatusSeeOther, authURL)
+		c.Redirect(http.StatusFound, authURL)
 	})
 
 	r.GET("/callback", func(c *gin.Context) {
