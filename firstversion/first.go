@@ -24,17 +24,17 @@ var (
 	clientSecret = "4ddd10a13f2a4c00af97c1916b21a8c2"
 	redirectURI  = "http://localhost:8086/callback"
 	// 向使用者要求的授權範圍
-	scope		 = "user-read-private user-read-email  user-top-read playlist-modify-public playlist-modify-private"
-	ARTISTNAME   = "King gnu"
-	TRACKNAME    = "Supernova"
+	scope      = "user-read-private user-read-email  user-top-read playlist-modify-public playlist-modify-private"
+	ARTISTNAME = "King gnu"
+	TRACKNAME  = "Supernova"
 	//state        = "randomStateString"   // 隨機字串，用於防止 CSRF 攻擊
 )
 
 var (
-	currentAccessToken   string // 保存當前的 Access Token
-	currentRefreshToken string // 保存 Refresh Token
-	tokenExpiresAt      int64  // Access Token 過期的 Unix 時間戳
-	processedRequests = make(map[string]bool) // 紀錄處理過的授權碼
+	currentAccessToken  string                  // 保存當前的 Access Token
+	currentRefreshToken string                  // 保存 Refresh Token
+	tokenExpiresAt      int64                   // Access Token 過期的 Unix 時間戳
+	processedRequests   = make(map[string]bool) // 紀錄處理過的授權碼
 )
 
 type TokenResponse struct {
@@ -56,26 +56,40 @@ type Signer struct {
 	TopTracks []Track
 }
 
+type Playlist struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
 type Track struct {
 	Name       string
+	ID         string
 	URL        string
 	ImageURL   string
 	PreviewURL string
+	Album      Album
 }
 
 type TemplateData struct {
-	UserData   User
-	SignerData Signer
-	PlaylistData Playlist
+	UserData        User
+	SignerData      Signer
+	PlaylistData    Playlist
 	SearchTrackData Track
 }
+type Album struct {
+	ID           string
+	Name         string
+	Release_date string
+	Total_teacks int
+}
 
-var userdata user
-var signerdata signer
+var userdata User
+var signerdata Signer
+var testGetTracks Track
 var playlistdata Playlist
 var playlistpointer *Playlist
 
-//要新增的tracks
+// 要新增的tracks
 var trackURIs = []string{
 	"spotify:track:24ntZeyCrVePmN3nUYhfLx",
 	"spotify:track:1pCcNaCodPssCc8Aq68gPS",
@@ -87,7 +101,7 @@ func getUserInfo(userInfo map[string]interface{}) {
 	externalUrls := userInfo["external_urls"].(map[string]interface{})
 	images := userInfo["images"].([]interface{})
 
-	userdata = user{
+	userdata = User{
 		Name:       userInfo["display_name"].(string),
 		SpotifyURL: externalUrls["spotify"].(string),
 		ImageURL:   images[0].(map[string]interface{})["url"].(string),
@@ -107,7 +121,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		UserData:        userdata,
 		SignerData:      signerdata,
 		SearchTrackData: testGetTracks,
-		PlaylistData: playlistdata,
+		PlaylistData:    playlistdata,
 	}
 
 	err = temp.Execute(w, data)
@@ -135,7 +149,7 @@ func generateAuthURL() string {
 func startServer() {
 
 	http.HandleFunc("/userinfo", handler)
-	
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		authURL := generateAuthURL()
 		//fmt.Fprintf(w, "請點擊以下連結進行授權：<a href='%s'>Spotify 授權</a>", authURL)
@@ -409,7 +423,6 @@ func searchArtist(ARTISTNAME string, accessToken string) error {
 		return err
 	}
 
-
 	// 搜索歌手 API 的基础 URL 和参数
 	baseSearchURL := "https://api.spotify.com/v1/search"
 	params := url.Values{}
@@ -489,7 +502,7 @@ func searchArtist(ARTISTNAME string, accessToken string) error {
 	for _, track := range tracks {
 		trackInfo := track.(map[string]interface{})
 		trackName := trackInfo["name"].(string)
-		trackImageURL := trackInfo["album"].(map[string]interface{})["images	].([]interface{})[0].(map[string]interface{})["url"].(string)
+		trackImageURL := trackInfo["album"].(map[string]interface{})["images"].([]interface{})[0].(map[string]interface{})["url"].(string)
 		previewURL, _ := trackInfo["preview_url"].(string) // 預覽連結 null，因此需要安全提取
 
 		// 将歌曲信息加入到列表
@@ -509,38 +522,130 @@ func searchArtist(ARTISTNAME string, accessToken string) error {
 	return nil
 }
 
+func createPlaylist(userID string, playlistName, playlistDescription string) (*Playlist, error) {
+	// 確保 Access Token 有效
+	if err := ensureValidAccessToken(); err != nil {
+		return nil, err
+	}
 
-	/*req.SetBasicAuth(clientID, clientSecret)
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")*/
+	// 建立請求資料
+	data := map[string]interface{}{
+		"name":        playlistName,        // 播放清單名稱
+		"description": playlistDescription, // 播放清單描述
+		"public":      false,               // 設置為私人播放清單(true: public playlist)
+	}
+	// 將資料轉換為 JSON 格式
+	body, _ := json.Marshal(data)
 
-    client := &http.Client{}
-    resp, err := client.Do(req)
-    if err != nil {
-        return false, "", err
-    }
-    defer resp.Body.Close()
+	// 構建 POST 請求 URL
+	url := fmt.Sprintf("https://api.spotify.com/v1/users/%s/playlists", userID)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(body)) // 傳送 JSON 資料
+	if err != nil {
+		return nil, err
+	}
 
-    if resp.StatusCode != http.StatusOK {
-        return false, "", fmt.Errorf("failed to fetch playlists, status: %d", resp.StatusCode)
-    }
+	// 設置請求標頭
+	req.Header.Set("Authorization", "Bearer "+currentAccessToken) // 使用 Bearer Token 認證
+	req.Header.Set("Content-Type", "application/json")            // 指定內容類型為 JSON
 
-    var playlists struct {
-        Items []struct {
-            ID   string `json:"id"`
-            Name string `json:"name"`
-        } `json:"items"`
-    }
-    if err := json.NewDecoder(resp.Body).Decode(&playlists); err != nil {
-        return false, "", err
-    }
+	// 創建 HTTP 客戶端並發送請求
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close() // 確保回應主體在函數結束前關閉
 
-    for _, playlist := range playlists.Items {
-        if playlist.Name == playlistName {
-            return true, playlist.ID, nil
-        }
-    }
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		return nil, fmt.Errorf("failed to create playlist, status: %d", resp.StatusCode)
+	}
 
-    return false, "", nil
+	// 解析回應資料到 Playlist 結構
+	var playlist Playlist
+	if err := json.NewDecoder(resp.Body).Decode(&playlist); err != nil {
+		return nil, err
+	}
+
+	log.Println("已新增播放清單")
+	return &playlist, nil
+}
+
+// API: add Tracks To Playlist
+func addTracksToPlaylist(playlistID string, trackURIs []string) error {
+	// 確保 Access Token 有效
+	if err := ensureValidAccessToken(); err != nil {
+		return err
+	}
+
+	// 建立請求資料
+	data := map[string]interface{}{
+		"uris": trackURIs, // 包含 Tracks URI 的陣列
+	}
+	// 將資料轉換為 JSON 格式
+	body, _ := json.Marshal(data)
+
+	// 構建 POST 請求 URL
+	url := fmt.Sprintf("https://api.spotify.com/v1/playlists/%s/tracks", playlistID)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(body)) // 傳送 JSON 資料
+	if err != nil {
+		return err
+	}
+
+	// 設置請求標頭
+	req.Header.Set("Authorization", "Bearer "+currentAccessToken) // 使用 Bearer Token 認證
+	req.Header.Set("Content-Type", "application/json")            // 指定內容類型為 JSON
+
+	// 創建 HTTP 客戶端並發送請求
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close() // 確保回應主體在函數結束前關閉
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		return fmt.Errorf("failed to add tracks, status: %d", resp.StatusCode)
+	}
+
+	return nil
+}
+
+// check if playlist exists
+func playlistExists(accessToken, playlistName string) (bool, string, error) {
+	req, err := http.NewRequest("GET", "https://api.spotify.com/v1/me/playlists", nil)
+	if err != nil {
+		return false, "", err
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return false, "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return false, "", fmt.Errorf("failed to fetch playlists, status: %d", resp.StatusCode)
+	}
+
+	var playlists struct {
+		Items []struct {
+			ID   string `json:"id"`
+			Name string `json:"name"`
+		} `json:"items"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&playlists); err != nil {
+		return false, "", err
+	}
+
+	for _, playlist := range playlists.Items {
+		if playlist.Name == playlistName {
+			return true, playlist.ID, nil
+		}
+	}
+
+	return false, "", nil
 }
 
 func searchTrack(trackName string, accessToken string, inputTracks *Track) error {
