@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type Song struct {
+type Song2 struct {
 	ID         int    `json:"id"`
 	Name       string `json:"name"`
 	Tracks     int    `json:"tracks"`
@@ -17,12 +17,12 @@ type Song struct {
 	ImageURL   string `json:"image_url"`
 }
 
-type User struct {
+type User2 struct {
 	ClientID     string `json:"client_id"`
 	ClientSecret string `json:"client_secret"`
 }
 
-type Singer struct {
+type Singer2 struct {
 	ID         int    `json:"id"`
 	Name       string `json:"name"`
 	Genre      string `json:"genre"`
@@ -34,7 +34,7 @@ type Singer struct {
 var maxSongID = 1
 var maxSingerID = 1
 
-var songList = []Song{
+var songList = []Song2{
 	{
 		ID:         1,
 		Name:       "Future Nostalgia",
@@ -56,7 +56,7 @@ var songList = []Song{
 	},
 }
 
-var singerList = []Singer{
+var singerList = []Singer2{
 	{
 		ID:         1,
 		Name:       "Dua Lipa",
@@ -67,14 +67,14 @@ var singerList = []Singer{
 	},
 }
 
-var users = []User{}
+var users = []User2{}
 
 var (
-	currentUser *User // 用於存儲當前登入的用戶
+	currentUser *User2 // 用於存儲當前登入的用戶
 )
 
-var favoriteSongs []Song
-var favoriteSingers []Singer
+var favoriteSongs []Song2
+var favoriteSingers []Singer2
 
 func main() {
 	r := gin.Default()
@@ -153,7 +153,7 @@ func main() {
 
 		 */
 		maxSongID++
-		newSong := Song{ID: maxSongID, Name: name, Tracks: tracks, Year: year}
+		newSong := Song2{ID: maxSongID, Name: name, Tracks: tracks, Year: year}
 		songList = append(songList, newSong)
 
 		c.Redirect(http.StatusFound, "/song")
@@ -169,7 +169,7 @@ func main() {
 		}
 
 		maxSingerID++
-		newSinger := Singer{ID: maxSingerID, Name: name, Genre: genre}
+		newSinger := Singer2{ID: maxSingerID, Name: name, Genre: genre}
 		singerList = append(singerList, newSinger)
 
 		c.Redirect(http.StatusFound, "/singer")
@@ -300,7 +300,7 @@ func main() {
 		clientSecret := c.PostForm("client_secret")
 
 		// 直接創建一個新的 User
-		newUser := User{
+		newUser := User2{
 			ClientID:     clientID,
 			ClientSecret: clientSecret,
 		}
