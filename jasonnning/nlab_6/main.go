@@ -67,18 +67,11 @@ var singerList = []Singer{
 	},
 }
 
-var users = []User{
-	{
-		ClientID:     "jason",
-		ClientSecret: "it's a secret",
-	},
-}
+var users = []User{}
 
 var (
 	currentUser *User // 用於存儲當前登入的用戶
 )
-
-var maxUserID = 0
 
 var favoriteAlbums []Album
 var favoriteSingers []Singer
@@ -268,15 +261,11 @@ func main() {
 		})
 	})
 
-	/*r.GET("/user", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "user.html", nil)
-	})*/
 	r.POST("/login", func(c *gin.Context) {
 		clientID := c.PostForm("client_id")
 		clientSecret := c.PostForm("client_secret")
 
 		// 直接創建一個新的 User
-		maxUserID++
 		newUser := User{
 			ClientID:     clientID,
 			ClientSecret: clientSecret,
@@ -309,7 +298,7 @@ func main() {
 	r.GET("/logout", func(c *gin.Context) {
 		// 清空 currentUser
 		currentUser = nil
-		c.Redirect(http.StatusFound, "/login")
+		c.Redirect(http.StatusFound, "/")
 	})
 
 	r.POST("/register", func(c *gin.Context) {
@@ -324,7 +313,6 @@ func main() {
 		}
 
 		// 新增到使用者清單
-		maxUserID++
 		newUser := User{
 			ClientID:     clientID,
 			ClientSecret: clientSecret,
