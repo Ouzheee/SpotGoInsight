@@ -75,7 +75,7 @@ var signerdata signer
 var playlistdata Playlist
 var playlistpointer *Playlist
 
-//要新增的tracks
+//新增到我的收藏的tracks
 var trackURIs = []string{
 	"spotify:track:24ntZeyCrVePmN3nUYhfLx",
 	"spotify:track:1pCcNaCodPssCc8Aq68gPS",
