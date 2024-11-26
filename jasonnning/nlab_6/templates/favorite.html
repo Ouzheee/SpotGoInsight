@@ -20,14 +20,14 @@
             font-weight: bold;
         }
 
-        .album-card {
+        .song-card {
             border-radius: 10px;
             margin: 10px;
             background-color: #181818;
             padding: 10px;
         }
 
-        .album-card img {
+        .song-card img {
             border-radius: 8px;
             
             max-width: 100%;
@@ -103,7 +103,7 @@
             justify-content: center;
             gap: 10px; /* 調整按鈕之間的間距 */
         }
-        .album-title {
+        .song-title {
             margin-top: 10px; /* 圖片和標題之間的行距 */
         }
     </style>
@@ -120,7 +120,7 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="/album">歌曲管理</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/song">歌曲管理</a></li>
                     <li class="nav-item"><a class="nav-link" href="/singer">歌手管理</a></li>
                     <li class="nav-item"><a class="nav-link" href="/favorite">我的收藏</a></li>
                     <li class="nav-item"><a class="nav-link" href="/user">我的檔案</a></li>
@@ -130,17 +130,17 @@
     </nav>
 
     <div class="container my-5">
-        <!-- Display Albums -->
+        <!-- Display Songs -->
         <h1 class="text-center mb-4">專輯收藏列表</h1>
-        <a href="/album" class="btn">專輯模式</a>
+        <a href="/song" class="btn">專輯模式</a>
         <div class="row">
             {{range .favorites}}
             <div class="col-md-4">
-                <div class="album-card text-center">
+                <div class="song-card text-center">
                     <img 
                         src="https://via.placeholder.com/100x100.png" 
                         alt="{{.Name}}" 
-                        class="playable-album" 
+                        class="playable-song" 
                         data-url="{{.AudioURL}}" 
                         data-name="{{.Name}}" 
                         data-artist="Dua Lipa"> <!-- 假設固定歌手 -->
@@ -190,10 +190,10 @@
         const currentArtist = document.getElementById('current-artist');
 
         // 取得所有可以點擊的專輯圖片
-        const albumImages = document.querySelectorAll('.playable-album');
+        const songImages = document.querySelectorAll('.playable-song');
 
         // 點擊專輯圖片播放歌曲
-        albumImages.forEach((img, index) => {
+        songImages.forEach((img, index) => {
             img.addEventListener('click', function () {
                 const songUrl = img.getAttribute('data-url');
                 const songName = img.getAttribute('data-name');
@@ -213,9 +213,9 @@
 
         // 播放/暫停按鈕控制
         playPauseBtn.addEventListener('click', function () {
-            if (!audio.src && albumImages.length > 0) {
+            if (!audio.src && songImages.length > 0) {
                 // 如果未設置任何歌曲，播放第一首
-                albumImages[0].click();
+                songImages[0].click();
                 return;
             }
 
@@ -232,13 +232,13 @@
 
         // 上一首/下一首功能（根據索引切換）
         prevSongBtn.addEventListener('click', function () {
-            currentIndex = (currentIndex - 1 + albumImages.length) % albumImages.length;
-            albumImages[currentIndex].click();
+            currentIndex = (currentIndex - 1 + songImages.length) % songImages.length;
+            songImages[currentIndex].click();
         });
 
         nextSongBtn.addEventListener('click', function () {
-            currentIndex = (currentIndex + 1) % albumImages.length;
-            albumImages[currentIndex].click();
+            currentIndex = (currentIndex + 1) % songImages.length;
+            songImages[currentIndex].click();
         });
 
         // 音頻播放結束時，切換到下一首

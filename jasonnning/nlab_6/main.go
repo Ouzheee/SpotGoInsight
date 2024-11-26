@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type Album struct {
+type Song struct {
 	ID         int    `json:"id"`
 	Name       string `json:"name"`
 	Tracks     int    `json:"tracks"`
@@ -31,10 +31,10 @@ type Singer struct {
 	ImageURL   string `json:"image_url"`
 }
 
-var maxAlbumID = 1
+var maxSongID = 1
 var maxSingerID = 1
 
-var albumList = []Album{
+var songList = []Song{
 	{
 		ID:         1,
 		Name:       "Future Nostalgia",
@@ -73,7 +73,7 @@ var (
 	currentUser *User // 用於存儲當前登入的用戶
 )
 
-var favoriteAlbums []Album
+var favoriteSongs []Song
 var favoriteSingers []Singer
 
 func main() {
@@ -88,11 +88,11 @@ func main() {
 		c.HTML(http.StatusOK, "menu.html", nil)
 	})
 
-	// Album Mode
-	r.GET("/album", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "album.html", gin.H{
-			"albumlist": albumList,
-			"favorites": favoriteAlbums,
+	// Song Mode
+	r.GET("/song", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "song.html", gin.H{
+			"songlist":  songList,
+			"favorites": favoriteSongs,
 		})
 	})
 
@@ -123,7 +123,7 @@ func main() {
 
 	r.GET("/favorite", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "favorite.html", gin.H{
-			"favorites": favoriteAlbums,
+			"favorites": favoriteSongs,
 		})
 	})
 
@@ -136,8 +136,9 @@ func main() {
 	/*==================================================================================*/
 
 	/*================================URL指令執行動作==================================*/
-	// Add Album
-	r.POST("/add/album", func(c *gin.Context) {
+	// Add Song
+
+	r.POST("/add/song", func(c *gin.Context) {
 		name := c.PostForm("name")
 		tracks, err := strconv.Atoi(c.PostForm("tracks"))
 		year, err2 := strconv.Atoi(c.PostForm("year"))
@@ -145,12 +146,17 @@ func main() {
 			c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid input"})
 			return
 		}
+		/*
 
-		maxAlbumID++
-		newAlbum := Album{ID: maxAlbumID, Name: name, Tracks: tracks, Year: year}
-		albumList = append(albumList, newAlbum)
 
-		c.Redirect(http.StatusFound, "/album")
+
+
+		 */
+		maxSongID++
+		newSong := Song{ID: maxSongID, Name: name, Tracks: tracks, Year: year}
+		songList = append(songList, newSong)
+
+		c.Redirect(http.StatusFound, "/song")
 	})
 
 	// Add Singer
@@ -169,46 +175,46 @@ func main() {
 		c.Redirect(http.StatusFound, "/singer")
 	})
 
-	// Add Album to Favorite
-	r.GET("/favorite/album/:id", func(c *gin.Context) {
+	// Add Song to Favorite
+	r.GET("/favorite/song/:id", func(c *gin.Context) {
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid ID format"})
 			return
 		}
 
-		for i, album := range albumList {
-			if album.ID == id {
-				albumList[i].IsFavorite = true // 加入最愛
-				favoriteAlbums = append(favoriteAlbums, albumList[i])
+		for i, song := range songList {
+			if song.ID == id {
+				songList[i].IsFavorite = true // 加入最愛
+				favoriteSongs = append(favoriteSongs, songList[i])
 				break
 			}
 		}
-		c.Redirect(http.StatusFound, "/album")
+		c.Redirect(http.StatusFound, "/song")
 	})
 
-	// Remove Album from Favorite
-	r.GET("/favorite/album/remove/:id", func(c *gin.Context) {
+	// Remove Song from Favorite
+	r.GET("/favorite/song/remove/:id", func(c *gin.Context) {
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid ID format"})
 			return
 		}
 
-		for i, album := range favoriteAlbums {
-			if album.ID == id {
+		for i, song := range favoriteSongs {
+			if song.ID == id {
 				// 從最愛中移除
-				favoriteAlbums = append(favoriteAlbums[:i], favoriteAlbums[i+1:]...)
-				for j, albumInList := range albumList {
-					if albumInList.ID == id {
-						albumList[j].IsFavorite = false
+				favoriteSongs = append(favoriteSongs[:i], favoriteSongs[i+1:]...)
+				for j, songInList := range songList {
+					if songInList.ID == id {
+						songList[j].IsFavorite = false
 						break
 					}
 				}
 				break
 			}
 		}
-		c.Redirect(http.StatusFound, "/album")
+		c.Redirect(http.StatusFound, "/song")
 	})
 
 	// Add Singer to Favorite
@@ -252,22 +258,22 @@ func main() {
 		c.Redirect(http.StatusFound, "/singer")
 	})
 
-	// Remove Album (Delete Album)
-	r.GET("/album/delete/:id", func(c *gin.Context) {
+	// Remove Song (Delete Song)
+	r.GET("/song/delete/:id", func(c *gin.Context) {
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid ID format"})
 			return
 		}
 
-		for i, album := range albumList {
-			if album.ID == id {
+		for i, song := range songList {
+			if song.ID == id {
 				// 從專輯列表中刪除
-				albumList = append(albumList[:i], albumList[i+1:]...)
+				songList = append(songList[:i], songList[i+1:]...)
 				break
 			}
 		}
-		c.Redirect(http.StatusFound, "/album")
+		c.Redirect(http.StatusFound, "/song")
 	})
 
 	// Remove Singer (Delete Singer)
@@ -306,7 +312,7 @@ func main() {
 		c.Redirect(http.StatusFound, "/user")
 	})
 
-	/*======================================================================*/
+	/*=========================================================================*/
 
 	// Start the server
 	r.Run(":8080")
