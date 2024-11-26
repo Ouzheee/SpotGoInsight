@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Info</title>
+</head>
+<body>
+    <h1>Name: {{.UserData.Name}}</h1>
+    <h1>External URL: <a href="{{.UserData.SpotifyURL}}" target="_blank">{{.UserData.SpotifyURL}}</a></h1>
+    <h1>Image URL:</h1>
+    <img src="{{.UserData.ImageURL}}" alt="User Image" style="width:150px; height:150px; border-radius:50%;">
+
+    <h1>The artist you searched: {{.SignerData.Name}}</h1>
+    <h1>Artist ID: {{.SignerData.SignerID}}</h1>
+
+    <h1>Top Tracks:</h1>
+    <ul>
+        {{range .SignerData.TopTracks}}
+        <li style="margin-bottom: 20px;">
+            <img src="{{.ImageURL}}" alt="{{.Name}}" style="width:100px; height:100px; margin-right: 10px; vertical-align: middle;">
+            <a href="{{.PreviewURL}}" target="_blank" style="font-size: 18px; vertical-align: middle;">{{.Name}}</a>
+        </li>
+        {{end}}
+    </ul>
+
+    <h1>Search Tracks: {{.SearchTrackData.Name}}</h1>
+        <li style="margin-bottom: 20px;">
+            <img src="{{.SearchTrackData.ImageURL}}" alt="{{.SearchTrackData.Name}}" style="width:100px; height:100px; margin-right: 10px; vertical-align: middle;">
+            <a href="{{.SearchTrackData.PreviewURL}}" target="_blank" style="font-size: 18px; vertical-align: middle;">{{.SearchTrackData.Name}}</a>
+        </li>
+    <h1>Search Track Album Information</h1>
+    <ul>
+        <li>Album Name: {{.SearchTrackData.Album.Name}}</li>
+        <li>Album ID: {{.SearchTrackData.Album.ID}}</li>
+    </ul>
+        
+</body>
+</html>
