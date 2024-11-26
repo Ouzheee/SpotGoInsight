@@ -22,7 +22,7 @@ import (
 var (
 	clientID     = "592fa46f290e4f1aa8b5768bbb802177"
 	clientSecret = "4ddd10a13f2a4c00af97c1916b21a8c2"
-	redirectURI  = "http://localhost:8086/callback"
+	redirectURI  = "http://localhost:8080/callback"
 	// 向使用者要求的授權範圍
 	scope      = "user-read-private user-read-email  user-top-read playlist-modify-public playlist-modify-private"
 	ARTISTNAME = "King gnu"
@@ -88,6 +88,7 @@ var singerdata Singer
 var testGetTracks Track
 var playlistdata Playlist
 var playlistpointer *Playlist
+var token *TokenResponse
 
 // 要新增的tracks
 var trackURIs = []string{
@@ -172,7 +173,7 @@ func startServer() {
 		}
 
 		// 防止重複處理請求
-		if processedRequests[code] {
+			if processedRequests[code] {
 			http.Error(w, "請求已處理", http.StatusBadRequest)
 			return
 		}

@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"strconv"
 	"github.com/gin-gonic/gin"
+	"fmt"
+	"log"
 )
 
 type Song2 struct {
@@ -80,6 +82,8 @@ func main() {
 
 	// 加載模板文件
 	r.LoadHTMLGlob("templates/*")
+
+	fmt.Println("伺服器啟動於 http://localhost:8080")
 
 	/*================================進入網頁URL指令==================================*/
 	// Main Menu page
@@ -295,8 +299,10 @@ func main() {
 
 	//login輸入操作
 	r.POST("/login", func(c *gin.Context) {
-		clientID := c.PostForm("client_id")
-		clientSecret := c.PostForm("client_secret")
+		clientID = c.PostForm("client_id")
+		clientSecret = c.PostForm("client_secret")
+		fmt.Println("id: ", clientID)
+		fmt.Println("secret: ", clientSecret)
 
 		// 直接創建一個新的 User
 		newUser := User2{
@@ -307,9 +313,48 @@ func main() {
 		// 設定 currentUser 為新創建的用戶
 		currentUser = &newUser
 
+		//授權畫面
+		authURL := generateAuthURL()
+		fmt.Println("authURL: ", authURL)
+		c.Redirect(http.StatusSeeOther, authURL)
+	})
+
+	r.GET("/callback", func(c *gin.Context) {
+		// 獲取授權碼
+		code := c.Query("code")
+		fmt.Println("token: ", code)
+		if code == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "未獲取到授權碼"})
+			return
+		}
+	
+		// 防止重複處理請求
+		if processedRequests[code] {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "請求已處理"})
+			return
+		}
+		processedRequests[code] = true
+		defer func() { delete(processedRequests, code) }()
+	
+		// 使用授權碼交換 Token
+		token, err := exchangeCodeForToken(code)
+		if err != nil {
+			log.Println("無法獲取 Token:", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "無法獲取 Token"})
+			return
+		}
+		fmt.Println("token: ", token)
+	
+		// 返回成功消息
+		/*c.JSON(http.StatusOK, gin.H{
+			"message":       "成功獲取授權碼與 Token",
+			"access_token":  token.AccessToken,
+			"refresh_token": token.RefreshToken,
+		})*/
+
 		// 登入成功，跳轉到用戶頁面
 		c.Redirect(http.StatusFound, "/user")
-	})
+	})	
 
 	/*=========================================================================*/
 
