@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -82,8 +83,8 @@ var maxUserID = 0
 
 var ex_user = User{
 	ID:           1,
-	ClientID:     "jason",
-	ClientSecret: "it's a secret",
+	ClientID:     "592fa46f290e4f1aa8b5768bbb802177",
+	ClientSecret: "4ddd10a13f2a4c00af97c1916b21a8c2",
 	UserName:     "jasonnning",
 }
 
@@ -109,11 +110,15 @@ func getCurrentUser(c *gin.Context) *User {
 	return &ex_user
 }
 
+var singerdata Singer_
+var token *TokenResponse
+
 func main() {
 	r := gin.Default()
 
 	// 加載模板文件
-	r.LoadHTMLGlob("templates/*")
+	r.LoadHTMLGlob("templates_copy/*")
+	fmt.Println("伺服器啟動於 http://localhost:8080")
 
 	// Main Menu page
 	r.GET("/", func(c *gin.Context) {
@@ -154,18 +159,37 @@ func main() {
 	})
 
 	// Add Singer
-	r.POST("/add/singer", func(c *gin.Context) {
+	r.POST("/add/singer", func(c *gin.Context) {	
+		handleAuthCallback(c)
+		
 		name := c.PostForm("name")
-		genre := c.PostForm("genre")
-		if name == "" || genre == "" {
+		//genre := c.PostForm("genre")
+		if name == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid input"})
 			return
 		}
+		fmt.Println("singer: ", name)
+
+		ARTISTNAME = name
+		singerFunc(c)
+		id, err := strconv.Atoi(singerdata.SingerID)
+		if err != nil {
+			fmt.Println("轉換錯誤:", err)
+		}
+		fmt.Println("singer: ", ARTISTNAME)
+		fmt.Println("id: ", id)
+		newSinger := Singer{
+			ID:         id,
+			Name:       singerdata.Name,
+			Genre:      "Pop",
+			IsFavorite: false,
+			AudioURL:   "https://p.scdn.co/mp3-preview/82e442871e6afd7efa4410ca735b3b13644f5184",
+			ImageURL:   "https://i.scdn.co/image/ab67616d00001e02ff9ca10b55ce82ae553c8228",
+		}
 
 		maxSingerID++
-		newSinger := Singer{ID: maxSingerID, Name: name, Genre: genre}
+		//newSinger := Singer{ID: maxSingerID, Name: name, Genre: genre}
 		singerList = append(singerList, newSinger)
-
 		c.Redirect(http.StatusFound, "/singer")
 	})
 
