@@ -82,6 +82,7 @@ func main() {
 	// 加載模板文件
 	r.LoadHTMLGlob("templates/*")
 
+	/*================================進入網頁URL指令==================================*/
 	// Main Menu page
 	r.GET("/", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "menu.html", nil)
@@ -103,6 +104,38 @@ func main() {
 		})
 	})
 
+	// 用戶頁面
+	r.GET("/user", func(c *gin.Context) {
+		if currentUser == nil {
+			// 如果沒有登入，重定向到主頁或登入頁
+			c.Redirect(http.StatusFound, "/")
+			return
+		}
+
+		// 傳遞 currentUser 的資料給模板
+		c.HTML(http.StatusOK, "user.html", gin.H{
+			"user": map[string]string{
+				"ClientID":     currentUser.ClientID,
+				"ClientSecret": currentUser.ClientSecret,
+			},
+		})
+	})
+
+	r.GET("/favorite", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "favorite.html", gin.H{
+			"favorites": favoriteAlbums,
+		})
+	})
+
+	r.GET("/logout", func(c *gin.Context) {
+		// 清空 currentUser
+		currentUser = nil
+		c.Redirect(http.StatusFound, "/")
+	})
+
+	/*==================================================================================*/
+
+	/*================================URL指令執行動作==================================*/
 	// Add Album
 	r.POST("/add/album", func(c *gin.Context) {
 		name := c.PostForm("name")
@@ -255,12 +288,7 @@ func main() {
 		c.Redirect(http.StatusFound, "/singer")
 	})
 
-	r.GET("/favorite", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "favorite.html", gin.H{
-			"favorites": favoriteAlbums,
-		})
-	})
-
+	//login輸入操作
 	r.POST("/login", func(c *gin.Context) {
 		clientID := c.PostForm("client_id")
 		clientSecret := c.PostForm("client_secret")
@@ -278,56 +306,9 @@ func main() {
 		c.Redirect(http.StatusFound, "/user")
 	})
 
-	// 用戶頁面
-	r.GET("/user", func(c *gin.Context) {
-		if currentUser == nil {
-			// 如果沒有登入，重定向到主頁或登入頁
-			c.Redirect(http.StatusFound, "/")
-			return
-		}
-
-		// 傳遞 currentUser 的資料給模板
-		c.HTML(http.StatusOK, "user.html", gin.H{
-			"user": map[string]string{
-				"ClientID":     currentUser.ClientID,
-				"ClientSecret": currentUser.ClientSecret,
-			},
-		})
-	})
-
-	r.GET("/logout", func(c *gin.Context) {
-		// 清空 currentUser
-		currentUser = nil
-		c.Redirect(http.StatusFound, "/")
-	})
-
-	r.POST("/register", func(c *gin.Context) {
-		clientID := c.PostForm("client_id")
-		clientSecret := c.PostForm("client_secret")
-		userName := c.PostForm("username")
-
-		// 驗證輸入是否有效
-		if clientID == "" || clientSecret == "" || userName == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"message": "All fields are required"})
-			return
-		}
-
-		// 新增到使用者清單
-		newUser := User{
-			ClientID:     clientID,
-			ClientSecret: clientSecret,
-		}
-		users = append(users, newUser)
-
-		c.Redirect(http.StatusFound, "/user")
-
-	})
-
-	// Register Page
-	r.GET("/register", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "register.html", nil)
-	})
+	/*======================================================================*/
 
 	// Start the server
 	r.Run(":8080")
+
 }
