@@ -9,8 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"time"
-	"github.com/gin-gonic/gin"
-	"strconv"
 )
 
 //clientID
@@ -52,8 +50,8 @@ type User struct {
 	UserID     string
 }
 
-type Signer struct {
-	SignerID  string
+type Singer struct {
+	SingerID  string
 	Name      string
 	TopTracks []Track
 }
@@ -74,7 +72,7 @@ type Track struct {
 
 type TemplateData struct {
 	UserData        User
-	SignerData      Signer
+	SingerData      Singer
 	PlaylistData    Playlist
 	SearchTrackData Track
 }
@@ -86,7 +84,7 @@ type Album struct {
 }
 
 var userdata User
-var signerdata Signer
+var singerdata Singer
 var testGetTracks Track
 var playlistdata Playlist
 var playlistpointer *Playlist
@@ -121,7 +119,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	data := TemplateData{
 		UserData:        userdata,
-		SignerData:      signerdata,
+		SingerData:      singerdata,
 		SearchTrackData: testGetTracks,
 		PlaylistData:    playlistdata,
 	}
@@ -242,7 +240,7 @@ func startServer() {
 		}
 		http.Redirect(w, r, "/userinfo", http.StatusSeeOther)
 		/*fmt.Fprintf(w, "Spotify API 呼叫成功！用戶資訊：%v", userInfo)
-		fmt.Fprintf(w, "Signer ID API 呼叫成功！歌手 %s 的ID：%v", ARTISTNAME, SignerID)*/
+		fmt.Fprintf(w, "Singer ID API 呼叫成功！歌手 %s 的ID：%v", ARTISTNAME, SingerID)*/
 	})
 
 	fmt.Println("伺服器啟動於 http://localhost:8086")
@@ -502,10 +500,10 @@ func searchArtist(ARTISTNAME string, accessToken string) error {
 		fmt.Printf(" %s: %s\n", trackName, previewURL)
 	}
 
-	// 将歌手信息和热门歌曲填充到 signerdata 中
-	signerdata.SignerID = artistID
-	signerdata.Name = ARTISTNAME
-	signerdata.TopTracks = topTracks
+	// 将歌手信息和热门歌曲填充到 singerdata 中
+	singerdata.SingerID = artistID
+	singerdata.Name = ARTISTNAME
+	singerdata.TopTracks = topTracks
 
 	return nil
 }
@@ -730,12 +728,12 @@ func searchTrack(trackName string, accessToken string, inputTracks *Track) error
 	//提取作家
 	artists := trackInfo["artists"].([]interface{})
 	firstArtist := artists[0].(map[string]interface{})
-	sign_name := firstArtist["name"].(string)
+	sing_name := firstArtist["name"].(string)
 
 	// Log or store the track image and other details
 	//fmt.Printf("Track: %s\nImage: %s\n", trackName, imageURL)
 	fmt.Printf("\nSearch result:  TestgetTracks trackname: %s   trackURL: %s  trackID: %s  trackPreview: %s\n", testGetTracks.Name, testGetTracks.URL, testGetTracks.ID, testGetTracks.PreviewURL)
-	fmt.Printf(" Album name: %s  Album release date: %s  the signer is %s\n", inputTracks.Album.Name, inputTracks.Album.Release_date, sign_name) //測試專輯的使用
+	fmt.Printf(" Album name: %s  Album release date: %s  the singer is %s\n", inputTracks.Album.Name, inputTracks.Album.Release_date, sing_name) //測試專輯的使用
 	return nil
 }
 
