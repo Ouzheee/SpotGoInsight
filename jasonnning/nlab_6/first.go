@@ -192,7 +192,7 @@ func startServer() {
 
 		// 調用 Spotify API
 		// 1. get user information
-		_, err = getCurrentUserInfo(token.AccessToken)
+		err = getCurrentUserInfo(token.AccessToken)
 		if err != nil {
 			log.Println("取得UserInfo失敗: ", err)
 			http.Error(w, "無法取得UserInfo", http.StatusInternalServerError)
@@ -354,16 +354,16 @@ func ensureValidAccessToken() error {
 }
 
 // API: get user information
-func getCurrentUserInfo(accessToken string) (map[string]interface{}, error) {
+func getCurrentUserInfo(accessToken string) (error) {
 	// 確保 Token 有效
 	if err := ensureValidAccessToken(); err != nil {
-		return nil, err
+		return err
 	}
 
 	// 繼續使用有效 Token 調用 API
 	req, err := http.NewRequest("GET", "https://api.spotify.com/v1/me", nil)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// 設置授權標頭，使用 Bearer Token 認證
@@ -374,14 +374,14 @@ func getCurrentUserInfo(accessToken string) (map[string]interface{}, error) {
 	// 發送請求並接收回應
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	// 確保在函式結束時關閉回應的主體，避免資源泄漏
 	defer resp.Body.Close()
 
 	// 檢查回應的 HTTP 狀態碼
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("API 請求失敗，狀態碼: %d", resp.StatusCode)
+		return fmt.Errorf("API 請求失敗，狀態碼: %d", resp.StatusCode)
 	}
 
 	// 定義一個通用的 map 用於存放解析後的用戶資訊
@@ -389,7 +389,7 @@ func getCurrentUserInfo(accessToken string) (map[string]interface{}, error) {
 	// 使用 JSON 解碼器將回應主體中的 JSON 資料解碼到 userInfo map 中
 	err = json.NewDecoder(resp.Body).Decode(&userInfo)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	//arrange userinfo
@@ -403,7 +403,7 @@ func getCurrentUserInfo(accessToken string) (map[string]interface{}, error) {
 		UserID:     userInfo["id"].(string),
 	}
 
-	return userInfo, nil
+	return nil
 }
 
 // API: search artist
@@ -715,7 +715,8 @@ func searchTrack(trackName string, accessToken string, inputTracks *Track) error
 	inputTracks.Album.Release_date = album["release_date"].(string)
 
 	images := album["images"].([]interface{})
-	inputTracks.ImageURL, _ = images[0].(string)
+	image := images[0].(map[string]interface{})
+	inputTracks.ImageURL, _ = image["url"].(string)
 
 	artists := track["artists"].([]interface{})
 	artist := artists[0].(map[string]interface{})
@@ -730,6 +731,7 @@ func searchTrack(trackName string, accessToken string, inputTracks *Track) error
 	fmt.Println("ImageURL: ", inputTracks.ImageURL)
 	fmt.Println("PreviewURL: ", inputTracks.PreviewURL)
 	fmt.Println("Singer: ", inputTracks.Singer)
+	fmt.Println("year: ", inputTracks.Album.Release_date)
 
 	// Log or store the track image and other details
 	//fmt.Printf("Track: %s\nImage: %s\n", trackName, imageURL)

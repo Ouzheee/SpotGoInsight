@@ -17,6 +17,7 @@ type Song2 struct {
 	AudioURL   string `json:"audio_url"`
 	ImageURL   string `json:"image_url"`
 	Singer     string `json:"singer"`
+	EmbedURL   string `json:"embed_url"`
 
 	Year       int    `json:"year"`
 	IsFavorite bool   `json:"is_favorite"`
@@ -35,6 +36,7 @@ type Singer2 struct {
 	IsFavorite bool   `json:"is_favorite"`
 	AudioURL   string `json:"audio_url"`
 	ImageURL   string `json:"image_url"`
+	EmbedURL   string `json:"embed_url"`
 }
 
 var maxSongID = 1
@@ -49,6 +51,7 @@ var songList = []Song2{
 		IsFavorite: false,
 		AudioURL:   "https://p.scdn.co/mp3-preview/82e442871e6afd7efa4410ca735b3b13644f5184",
 		ImageURL:   "https://i.scdn.co/image/ab67616d00001e02ff9ca10b55ce82ae553c8228",
+		EmbedURL:	"https://open.spotify.com/embed/track/3XYRV7ZSHqIRDG87DKTtry?utm_source=generator",
 	},
 
 	{
@@ -59,6 +62,7 @@ var songList = []Song2{
 		IsFavorite: false,
 		AudioURL:   "https://p.scdn.co/mp3-preview/104ad0ea32356b9f3b2e95a8610f504c90b0026b?cid=8897482848704f2a8f8d7c79726a70d4",
 		ImageURL:   "https://i.scdn.co/image/ab67616d00001e02ff9ca10b55ce82ae553c8228",
+		EmbedURL:	"https://open.spotify.com/embed/track/3XYRV7ZSHqIRDG87DKTtry?utm_source=generator",	
 	},
 }
 
@@ -70,6 +74,7 @@ var singerList = []Singer2{
 		IsFavorite: false,
 		AudioURL:   "https://p.scdn.co/mp3-preview/82e442871e6afd7efa4410ca735b3b13644f5184",
 		ImageURL:   "https://i.scdn.co/image/ab67616d00001e02ff9ca10b55ce82ae553c8228",
+		EmbedURL:   "https://open.spotify.com/embed/artist/6WmXWHmfBMhupyIs8MSqtu?utm_source=generator",
 	},
 }
 
@@ -166,6 +171,8 @@ func main() {
 
 		maxSongID++
 		year, _ := strconv.Atoi(trackdata.Album.Release_date)
+		embedURL := fmt.Sprintf("https://open.spotify.com/embed/track/%s?utm_source=generator", trackdata.ID)
+		fmt.Println("embedURL: ", embedURL)
 		newSong := Song2{
 			SongID: trackdata.ID, 
 			Name: trackdata.Name, 
@@ -174,6 +181,7 @@ func main() {
 			ImageURL: trackdata.ImageURL,
 			Singer: trackdata.Singer,
 			Year: year,
+			EmbedURL: embedURL,
 		}
 		songList = append(songList, newSong)
 
@@ -199,10 +207,12 @@ func main() {
 		}
 
 		maxSingerID++
+		embedURL := fmt.Sprintf("https://open.spotify.com/embed/artist/%s?utm_source=generator", singerdata.SingerID)
 		newSinger := Singer2{
 			SingerID: singerdata.SingerID,
 			Name:     singerdata.Name,
 			ImageURL: singerdata.ImageURL,
+			EmbedURL: embedURL,
 		}
 		fmt.Println("ImageURL: ", singerdata.ImageURL)
 		singerList = append(singerList, newSinger)
