@@ -86,7 +86,7 @@ type Album struct {
 
 var userdata User
 var singerdata Singer
-var testGetTracks Track
+var trackdata Track
 var playlistdata Playlist
 var playlistpointer *Playlist
 var token *TokenResponse
@@ -122,7 +122,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	data := TemplateData{
 		UserData:        userdata,
 		SingerData:      singerdata,
-		SearchTrackData: testGetTracks,
+		SearchTrackData: trackdata,
 		PlaylistData:    playlistdata,
 	}
 
@@ -235,7 +235,7 @@ func startServer() {
 			return
 		}
 		// 4. search track
-		err = searchTrack(TRACKNAME, token.AccessToken, &testGetTracks)
+		err = searchTrack(TRACKNAME, token.AccessToken, &trackdata)
 		if err != nil {
 			log.Println("搜索歌曲失敗:", err)
 			http.Error(w, "無法搜尋歌曲", http.StatusInternalServerError)
@@ -749,7 +749,7 @@ func searchTrack(trackName string, accessToken string, inputTracks *Track) error
 
 	// Log or store the track image and other details
 	//fmt.Printf("Track: %s\nImage: %s\n", trackName, imageURL)
-	fmt.Printf("\nSearch result:  TestgetTracks trackname: %s   trackURL: %s  trackID: %s  trackPreview: %s\n", testGetTracks.Name, testGetTracks.URL, testGetTracks.ID, testGetTracks.PreviewURL)
+	fmt.Printf("\nSearch result:  TestgetTracks trackname: %s   trackURL: %s  trackID: %s  trackPreview: %s\n", trackdata.Name, trackdata.URL, trackdata.ID, trackdata.PreviewURL)
 	fmt.Printf(" Album name: %s  Album release date: %s  the singer is %s\n", inputTracks.Album.Name, inputTracks.Album.Release_date, sing_name) //測試專輯的使用
 	return nil
 }
