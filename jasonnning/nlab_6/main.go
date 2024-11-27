@@ -154,7 +154,7 @@ func main() {
 			return
 		}
 		
-		err = searchTrack(TRACKNAME, token.AccessToken, &testGetTracks)
+		err = searchTrack(TRACKNAME, token.AccessToken, &trackdata)
 		if err != nil {
 			log.Println("搜索歌曲失敗:", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "無法搜尋歌曲"})
