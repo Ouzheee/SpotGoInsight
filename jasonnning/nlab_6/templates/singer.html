@@ -137,8 +137,7 @@
             {{range .singers}}
                 <div class="col-md-4">
                     <div class="singer-card text-center">
-                        <iframe style="border-radius:12px" src="{{.EmbedURL}}" width="100%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>                        <img src="{{.ImageURL}}" alt="{{.Name}}">
-                        <h5>{{.Name}}</h5>
+                        <iframe style="border-radius:12px" src="{{.EmbedURL}}" width="80%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>              
                         <p>{{.Genre}}</p>
 
                         <!-- Add to Favorite Button -->
@@ -164,7 +163,7 @@
             {{range .favorites}}
                 <div class="col-md-4">
                     <div class="singer-card text-center">
-                        <img src="{{.ImageURL}}" alt="{{.Name}}"> <!-- 假設這是歌手圖片 -->
+                        <img src="{{.ImageURL}}" width="80%" alt="{{.Name}}"> <!-- 假設這是歌手圖片 -->
                         <h5>{{.Name}}</h5>
                         <p>{{.Genre}}</p>
                     </div>

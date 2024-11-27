@@ -10,16 +10,16 @@ import (
 )
 
 type Song2 struct {
-	ID         int    `json:"id"`
-	SongID     string `json:"songid"`
-	Name       string `json:"name"`
-	URL 	   string `json:"url"`
-	AudioURL   string `json:"audio_url"`
-	ImageURL   string `json:"image_url"`
-	Singer     string `json:"singer"`
-	EmbedURL   string `json:"embed_url"`
+	ID       int    `json:"id"`
+	SongID   string `json:"songid"`
+	Name     string `json:"name"`
+	URL      string `json:"url"`
+	AudioURL string `json:"audio_url"`
+	ImageURL string `json:"image_url"`
+	Singer   string `json:"singer"`
+	EmbedURL string `json:"embed_url"`
 
-	Year       int    `json:"year"`
+	Year       string `json:"year"`
 	IsFavorite bool   `json:"is_favorite"`
 }
 
@@ -39,44 +39,12 @@ type Singer2 struct {
 	EmbedURL   string `json:"embed_url"`
 }
 
-var maxSongID = 1
-var maxSingerID = 1
+var maxSongID = 0
+var maxSingerID = 0
 
-var songList = []Song2{
-	{
-		ID:         1,
-		Name:       "Future Nostalgia",
-		//Tracks:     11,
-		Year:       2020,
-		IsFavorite: false,
-		AudioURL:   "https://p.scdn.co/mp3-preview/82e442871e6afd7efa4410ca735b3b13644f5184",
-		ImageURL:   "https://i.scdn.co/image/ab67616d00001e02ff9ca10b55ce82ae553c8228",
-		EmbedURL:	"https://open.spotify.com/embed/track/3XYRV7ZSHqIRDG87DKTtry?utm_source=generator",
-	},
+var songList = []Song2{}
 
-	{
-		ID:         2,
-		Name:       "陳庭毅真的很強",
-		//Tracks:     11,
-		Year:       2020,
-		IsFavorite: false,
-		AudioURL:   "https://p.scdn.co/mp3-preview/104ad0ea32356b9f3b2e95a8610f504c90b0026b?cid=8897482848704f2a8f8d7c79726a70d4",
-		ImageURL:   "https://i.scdn.co/image/ab67616d00001e02ff9ca10b55ce82ae553c8228",
-		EmbedURL:	"https://open.spotify.com/embed/track/3XYRV7ZSHqIRDG87DKTtry?utm_source=generator",	
-	},
-}
-
-var singerList = []Singer2{
-	{
-		ID:         1,
-		Name:       "Dua Lipa",
-		Genre:      "Pop",
-		IsFavorite: false,
-		AudioURL:   "https://p.scdn.co/mp3-preview/82e442871e6afd7efa4410ca735b3b13644f5184",
-		ImageURL:   "https://i.scdn.co/image/ab67616d00001e02ff9ca10b55ce82ae553c8228",
-		EmbedURL:   "https://open.spotify.com/embed/artist/6WmXWHmfBMhupyIs8MSqtu?utm_source=generator",
-	},
-}
+var singerList = []Singer2{}
 
 var users = []User2{}
 
@@ -170,17 +138,18 @@ func main() {
 		}
 
 		maxSongID++
-		year, _ := strconv.Atoi(trackdata.Album.Release_date)
+		//year, _ := strconv.Atoi(trackdata.Album.Release_date)
 		embedURL := fmt.Sprintf("https://open.spotify.com/embed/track/%s?utm_source=generator", trackdata.ID)
 		fmt.Println("embedURL: ", embedURL)
 		newSong := Song2{
-			SongID: trackdata.ID, 
-			Name: trackdata.Name, 
-			URL: trackdata.URL,
+			ID:       maxSongID,
+			SongID:   trackdata.ID,
+			Name:     trackdata.Name,
+			URL:      trackdata.URL,
 			AudioURL: trackdata.PreviewURL,
 			ImageURL: trackdata.ImageURL,
-			Singer: trackdata.Singer,
-			Year: year,
+			Singer:   trackdata.Singer,
+			Year:     trackdata.Album.Release_date,
 			EmbedURL: embedURL,
 		}
 		songList = append(songList, newSong)
@@ -209,6 +178,7 @@ func main() {
 		maxSingerID++
 		embedURL := fmt.Sprintf("https://open.spotify.com/embed/artist/%s?utm_source=generator", singerdata.SingerID)
 		newSinger := Singer2{
+			ID:       maxSingerID,
 			SingerID: singerdata.SingerID,
 			Name:     singerdata.Name,
 			ImageURL: singerdata.ImageURL,

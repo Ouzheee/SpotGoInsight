@@ -135,19 +135,13 @@
         <a href="/song" class="btn">專輯模式</a>
         <div class="row">
             {{range .favorites}}
-            <div class="col-md-4">
-                <div class="song-card text-center">
-                    <img 
-                        src="https://via.placeholder.com/100x100.png" 
-                        alt="{{.Name}}" 
-                        class="playable-song" 
-                        data-url="{{.AudioURL}}" 
-                        data-name="{{.Name}}" 
-                        data-artist="Dua Lipa"> <!-- 假設固定歌手 -->
-                    <h5>{{.Name}}</h5>
-                    <p>{{.Tracks}} tracks - {{.Year}}</p>
+                <div class="col-md-4">
+                    <div class="song-card text-center">
+                        <img src="{{.ImageURL}}" alt="{{.Name}}" width="100" height="100">
+                        <h5>{{.Name}}</h5>
+                        <p>{{.Year}}</p>
+                    </div>
                 </div>
-            </div>
             {{end}}
         </div>
     </div>

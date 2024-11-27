@@ -155,15 +155,8 @@
                 <div class="col-md-4">
                     <div class="song-card text-center">
                         <iframe style="border-radius:12px" src="{{.EmbedURL}}" width="100%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>        
-                        <img src="{{.ImageURL}}" alt="{{.Name}}" width="200" height="200">
                         <h5 class="song-title">{{.Name}}</h5>
                         <p>{{.Year}}</p>
-                        <div class="audio-player">
-                            <audio controls>
-                                <source src="{{.AudioURL}}" type="audio/mpeg">
-                                Your browser does not support the audio element.
-                            </audio>
-                        </div>
                         <!-- Add to Favorite Button -->
                         {{if not .IsFavorite}}
                             <a href="/favorite/song/{{.ID}}" class="btn btn-outline-light btn-space">加入最愛</a>
@@ -184,7 +177,7 @@
                     <div class="song-card text-center">
                         <img src="{{.ImageURL}}" alt="{{.Name}}" width="100" height="100">
                         <h5>{{.Name}}</h5>
-                        <p>{{.Tracks}} tracks - {{.Year}}</p>
+                        <p>{{.Year}}</p>
                     </div>
                 </div>
             {{end}}
