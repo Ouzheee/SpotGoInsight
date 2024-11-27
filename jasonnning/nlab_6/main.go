@@ -11,12 +11,15 @@ import (
 
 type Song2 struct {
 	ID         int    `json:"id"`
+	SongID     string `json:"songid"`
 	Name       string `json:"name"`
-	Tracks     int    `json:"tracks"`
-	Year       int    `json:"year"`
-	IsFavorite bool   `json:"is_favorite"`
+	URL 	   string `json:"url"`
 	AudioURL   string `json:"audio_url"`
 	ImageURL   string `json:"image_url"`
+	Singer     string `json:"singer"`
+
+	Year       int    `json:"year"`
+	IsFavorite bool   `json:"is_favorite"`
 }
 
 type User2 struct {
@@ -41,7 +44,7 @@ var songList = []Song2{
 	{
 		ID:         1,
 		Name:       "Future Nostalgia",
-		Tracks:     11,
+		//Tracks:     11,
 		Year:       2020,
 		IsFavorite: false,
 		AudioURL:   "https://p.scdn.co/mp3-preview/82e442871e6afd7efa4410ca735b3b13644f5184",
@@ -51,7 +54,7 @@ var songList = []Song2{
 	{
 		ID:         2,
 		Name:       "陳庭毅真的很強",
-		Tracks:     11,
+		//Tracks:     11,
 		Year:       2020,
 		IsFavorite: false,
 		AudioURL:   "https://p.scdn.co/mp3-preview/104ad0ea32356b9f3b2e95a8610f504c90b0026b?cid=8897482848704f2a8f8d7c79726a70d4",
@@ -143,18 +146,18 @@ func main() {
 	/*==================================================================================*/
 
 	/*================================URL指令執行動作==================================*/
-	// Add Song
 
+	// Add Song
 	r.POST("/add/song", func(c *gin.Context) {
 		name := c.PostForm("name")
-		tracks, err := strconv.Atoi(c.PostForm("tracks"))
-		year, err2 := strconv.Atoi(c.PostForm("year"))
-		if err != nil || err2 != nil || name == "" {
+		if name == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid input"})
 			return
 		}
-		
-		err = searchTrack(TRACKNAME, token.AccessToken, &trackdata)
+
+		TRACKNAME = name
+		fmt.Println("search track name: ", name)
+		err := searchTrack(TRACKNAME, token.AccessToken, &trackdata)
 		if err != nil {
 			log.Println("搜索歌曲失敗:", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "無法搜尋歌曲"})
@@ -162,7 +165,16 @@ func main() {
 		}
 
 		maxSongID++
-		newSong := Song2{ID: maxSongID, Name: name, Tracks: tracks, Year: year}
+		year, _ := strconv.Atoi(trackdata.Album.Release_date)
+		newSong := Song2{
+			SongID: trackdata.ID, 
+			Name: trackdata.Name, 
+			URL: trackdata.URL,
+			AudioURL: trackdata.PreviewURL,
+			ImageURL: trackdata.ImageURL,
+			Singer: trackdata.Singer,
+			Year: year,
+		}
 		songList = append(songList, newSong)
 
 		c.Redirect(http.StatusFound, "/song")

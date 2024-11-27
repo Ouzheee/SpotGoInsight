@@ -69,6 +69,7 @@ type Track struct {
 	ImageURL   string
 	PreviewURL string
 	Album      Album
+	Singer     string
 }
 
 type TemplateData struct {
@@ -704,53 +705,36 @@ func searchTrack(trackName string, accessToken string, inputTracks *Track) error
 	track := items[0].(map[string]interface{})
 	trackID := track["id"].(string)
 	inputTracks.ID = trackID
-	inputTracks.Name = TRACKNAME
-
-	//Use track ID to catch the Image of track and  relation ship between others
-	trackDetailsURL := fmt.Sprintf("https://api.spotify.com/v1/tracks/%s", trackID)
-	req, err = http.NewRequest("GET", trackDetailsURL, nil)
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Authorization", "Bearer "+accessToken)
-
-	// Execute the HTTP request for track details
-	resp, err = client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	// Validate the response
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to get track details. Status code: %d", resp.StatusCode)
-	}
-
-	// Parse the track details
-	var trackInfo map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&trackInfo); err != nil {
-		return err
-	}
+	inputTracks.Name = track["name"].(string)
+	inputTracks.PreviewURL, _ = track["preview_url"].(string)
 
 	// Extract album image URL and other details
-	album := trackInfo["album"].(map[string]interface{})
+	album := track["album"].(map[string]interface{})
 	inputTracks.Album.Name = album["name"].(string)
 	inputTracks.Album.ID = album["id"].(string)
 	inputTracks.Album.Release_date = album["release_date"].(string)
-	images := album["images"].([]interface{})
-	inputTracks.URL = images[0].(map[string]interface{})["url"].(string)
-	previewURL, _ := trackInfo["preview_url"].(string)
-	inputTracks.PreviewURL = previewURL
 
-	//提取作家
-	artists := trackInfo["artists"].([]interface{})
-	firstArtist := artists[0].(map[string]interface{})
-	sing_name := firstArtist["name"].(string)
+	images := album["images"].([]interface{})
+	inputTracks.ImageURL, _ = images[0].(string)
+
+	artists := track["artists"].([]interface{})
+	artist := artists[0].(map[string]interface{})
+	inputTracks.Singer, _ = artist["name"].(string)
+
+	externalURL := track["external_urls"].(map[string]interface{})
+	inputTracks.URL, _ = externalURL["spotify"].(string)
+
+	fmt.Println("track name: ", inputTracks.Name)
+	fmt.Println("ID: ", inputTracks.ID)
+	fmt.Println("URL: ", inputTracks.URL)
+	fmt.Println("ImageURL: ", inputTracks.ImageURL)
+	fmt.Println("PreviewURL: ", inputTracks.PreviewURL)
+	fmt.Println("Singer: ", inputTracks.Singer)
 
 	// Log or store the track image and other details
 	//fmt.Printf("Track: %s\nImage: %s\n", trackName, imageURL)
-	fmt.Printf("\nSearch result:  TestgetTracks trackname: %s   trackURL: %s  trackID: %s  trackPreview: %s\n", trackdata.Name, trackdata.URL, trackdata.ID, trackdata.PreviewURL)
-	fmt.Printf(" Album name: %s  Album release date: %s  the singer is %s\n", inputTracks.Album.Name, inputTracks.Album.Release_date, sing_name) //測試專輯的使用
+	//fmt.Printf("\nSearch result:  TestgetTracks trackname: %s   trackURL: %s  trackID: %s  trackPreview: %s\n", trackdata.Name, trackdata.URL, trackdata.ID, trackdata.PreviewURL)
+	//fmt.Printf(" Album name: %s  Album release date: %s  the singer is %s\n", inputTracks.Album.Name, inputTracks.Album.Release_date, sing_name) //測試專輯的使用
 	return nil
 }
 

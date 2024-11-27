@@ -137,7 +137,7 @@
             {{range .singers}}
                 <div class="col-md-4">
                     <div class="singer-card text-center">
-                        <img src="https://via.placeholder.com/200x200.png" alt="{{.Name}}">
+                        <img src="{{.ImageURL}}" alt="{{.Name}}">
                         <h5>{{.Name}}</h5>
                         <p>{{.Genre}}</p>
 
@@ -164,7 +164,7 @@
             {{range .favorites}}
                 <div class="col-md-4">
                     <div class="singer-card text-center">
-                        <img src="https://via.placeholder.com/100x100.png" alt="{{.Name}}"> <!-- 假設這是歌手圖片 -->
+                        <img src="{{.ImageURL}}" alt="{{.Name}}"> <!-- 假設這是歌手圖片 -->
                         <h5>{{.Name}}</h5>
                         <p>{{.Genre}}</p>
                     </div>
