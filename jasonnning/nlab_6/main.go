@@ -1,8 +1,11 @@
 package main
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 	"strconv"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -23,6 +26,7 @@ type User2 struct {
 
 type Singer2 struct {
 	ID         int    `json:"id"`
+	SingerID   string `json:"singerid"`
 	Name       string `json:"name"`
 	Genre      string `json:"genre"`
 	IsFavorite bool   `json:"is_favorite"`
@@ -80,6 +84,10 @@ func main() {
 
 	// 加載模板文件
 	r.LoadHTMLGlob("templates/*")
+
+	fmt.Println("伺服器啟動於 http://localhost:8080")
+	fmt.Println("cliend id: 592fa46f290e4f1aa8b5768bbb802177")
+	fmt.Println("cliend secret: 4ddd10a13f2a4c00af97c1916b21a8c2")
 
 	/*================================進入網頁URL指令==================================*/
 	// Main Menu page
@@ -161,14 +169,27 @@ func main() {
 	// Add Singer
 	r.POST("/add/singer", func(c *gin.Context) {
 		name := c.PostForm("name")
-		genre := c.PostForm("genre")
-		if name == "" || genre == "" {
+		if name == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid input"})
+			return
+		}
+		fmt.Println("enter name: ", name)
+
+		ARTISTNAME = name
+		fmt.Println("token======", token.AccessToken)
+		err := searchArtist(ARTISTNAME, token.AccessToken)
+		if err != nil {
+			log.Println("搜索歌手失敗:", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "無法搜索歌手"})
 			return
 		}
 
 		maxSingerID++
-		newSinger := Singer2{ID: maxSingerID, Name: name, Genre: genre}
+		newSinger := Singer2{
+			SingerID: singerdata.SingerID,
+			Name:     singerdata.Name,
+		}
+		fmt.Println("singerID: ", singerdata.SingerID)
 		singerList = append(singerList, newSinger)
 
 		c.Redirect(http.StatusFound, "/singer")
@@ -295,9 +316,9 @@ func main() {
 
 	//login輸入操作
 	r.POST("/login", func(c *gin.Context) {
-		clientID := c.PostForm("client_id")
-		clientSecret := c.PostForm("client_secret")
-
+		clientID = c.PostForm("client_id")
+		clientSecret = c.PostForm("client_secret")
+		
 		// 直接創建一個新的 User
 		newUser := User2{
 			ClientID:     clientID,
@@ -306,6 +327,43 @@ func main() {
 
 		// 設定 currentUser 為新創建的用戶
 		currentUser = &newUser
+
+		//授權畫面
+		authURL := generateAuthURL()
+		c.Redirect(http.StatusFound, authURL)
+	})
+
+	r.GET("/callback", func(c *gin.Context) {
+		// 獲取授權碼
+		code := c.Query("code")
+		if code == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "未獲取到授權碼"})
+			return
+		}
+
+		// 防止重複處理請求
+		if processedRequests[code] {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "請求已處理"})
+			return
+		}
+		processedRequests[code] = true
+		defer func() { delete(processedRequests, code) }()
+
+		// 使用授權碼交換 Token
+		tokentmp, err := exchangeCodeForToken(code)
+		if err != nil {
+			log.Println("無法獲取 Token:", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "無法獲取 Token"})
+			return
+		}
+		token = tokentmp
+
+		// 返回成功消息
+		/*c.JSON(http.StatusOK, gin.H{
+			"message":       "成功獲取授權碼與 Token",
+			"access_token":  token.AccessToken,
+			"refresh_token": token.RefreshToken,
+		})*/
 
 		// 登入成功，跳轉到用戶頁面
 		c.Redirect(http.StatusFound, "/user")
