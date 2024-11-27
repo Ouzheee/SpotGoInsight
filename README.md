@@ -53,7 +53,7 @@ GOOOOOO
    client ID的問題沒有解決，切換到不同電腦、登入不同帳號就會找不到token
    找裡來說，所有使用者都可以使用同一個開發者提供的client ID去申請token，但目前看下來是不行的
    該問題亟待解決
-   新增了preview URL、draw the toptracs one the html檔
+   新增了preview URL、draw the toptracks on the html檔
 
 ### 11/22進度
 
@@ -73,7 +73,9 @@ Client Id 決定先讓使用者自己想辦法生出來之後書來，再使用�
 ### 11/27進度
 
 完成了前後端的串接，搜尋歌曲的網頁可以顯示歌曲的名字、圖片、連結
-但是當我們測試試聽功能時，發現原本可以正常使用的視聽連結無法使用了，當我們重新翻閱API的使用頁面時，才發現spotify更新一部份的web API功能，30秒視聽的API被移除了
+![image](https://github.com/user-attachments/assets/37fc1c44-9d2d-477c-a9f9-b29ea4439beb)
+
+但是當我們測試試聽功能時，發現原本可以正常使用的試聽連結無法使用了，當我們重新翻閱API的使用頁面時，才發現spotify更新一部份的web API功能，30秒視聽的API被移除了
 原本這是對我們來說很重要的功能，花了很多時間，結果做到一半被刪除了，下次討論想辦法解決
 ![image](https://github.com/user-attachments/assets/03ce3ba3-599f-44c7-af49-19401f10296f)
 
