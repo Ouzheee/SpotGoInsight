@@ -54,6 +54,7 @@ type Singer struct {
 	SingerID  string
 	Name      string
 	TopTracks []Track
+	ImageURL  string
 }
 
 type Playlist struct {
@@ -173,7 +174,7 @@ func startServer() {
 		}
 
 		// 防止重複處理請求
-			if processedRequests[code] {
+		if processedRequests[code] {
 			http.Error(w, "請求已處理", http.StatusBadRequest)
 			return
 		}
@@ -233,6 +234,7 @@ func startServer() {
 			http.Error(w, "無法新增歌曲到播放清單", http.StatusInternalServerError)
 			return
 		}
+		// 4. search track
 		err = searchTrack(TRACKNAME, token.AccessToken, &testGetTracks)
 		if err != nil {
 			log.Println("搜索歌曲失敗:", err)
@@ -406,7 +408,7 @@ func getCurrentUserInfo(accessToken string) (map[string]interface{}, error) {
 // API: search artist
 func searchArtist(ARTISTNAME string, accessToken string) error {
 	fmt.Println("---search---")
-	
+
 	// 確保 Token 有效
 	if err := ensureValidAccessToken(); err != nil {
 		return err
@@ -456,8 +458,19 @@ func searchArtist(ARTISTNAME string, accessToken string) error {
 		return fmt.Errorf("未找到名为 '%s' 的歌手", ARTISTNAME)
 	}
 
+	// 取得第一個歌手
 	artist := items[0].(map[string]interface{})
 	artistID := artist["id"].(string)
+	artistName := artist["name"].(string)
+
+	// 處理圖片（images）
+	var artistImageURL string
+	if images, ok := artist["images"].([]interface{}); ok && len(images) > 0 {
+		image := images[0].(map[string]interface{})
+		artistImageURL = image["url"].(string)
+	} else {
+		artistImageURL = "未提供圖片"
+	}
 
 	// 调用 Top Tracks API
 	topTracksURL := fmt.Sprintf("https://api.spotify.com/v1/artists/%s/top-tracks?market=US", artistID)
@@ -505,8 +518,9 @@ func searchArtist(ARTISTNAME string, accessToken string) error {
 
 	// 将歌手信息和热门歌曲填充到 singerdata 中
 	singerdata.SingerID = artistID
-	singerdata.Name = ARTISTNAME
+	singerdata.Name = artistName
 	singerdata.TopTracks = topTracks
+	singerdata.ImageURL = artistImageURL
 
 	return nil
 }

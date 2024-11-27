@@ -153,12 +153,14 @@ func main() {
 			c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid input"})
 			return
 		}
-		/*
+		
+		err = searchTrack(TRACKNAME, token.AccessToken, &testGetTracks)
+		if err != nil {
+			log.Println("搜索歌曲失敗:", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "無法搜尋歌曲"})
+			return
+		}
 
-
-
-
-		 */
 		maxSongID++
 		newSong := Song2{ID: maxSongID, Name: name, Tracks: tracks, Year: year}
 		songList = append(songList, newSong)
@@ -188,8 +190,9 @@ func main() {
 		newSinger := Singer2{
 			SingerID: singerdata.SingerID,
 			Name:     singerdata.Name,
+			ImageURL: singerdata.ImageURL,
 		}
-		fmt.Println("singerID: ", singerdata.SingerID)
+		fmt.Println("ImageURL: ", singerdata.ImageURL)
 		singerList = append(singerList, newSinger)
 
 		c.Redirect(http.StatusFound, "/singer")
@@ -318,7 +321,7 @@ func main() {
 	r.POST("/login", func(c *gin.Context) {
 		clientID = c.PostForm("client_id")
 		clientSecret = c.PostForm("client_secret")
-		
+
 		// 直接創建一個新的 User
 		newUser := User2{
 			ClientID:     clientID,
