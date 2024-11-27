@@ -24,17 +24,17 @@ var (
 	clientSecret = "4ddd10a13f2a4c00af97c1916b21a8c2"
 	redirectURI  = "http://localhost:8086/callback"
 	// 向使用者要求的授權範圍
-	scope		 = "user-read-private user-read-email  user-top-read playlist-modify-public playlist-modify-private"
-	ARTISTNAME   = "King gnu"
-	TRACKNAME    = "Supernova"
+	scope      = "user-read-private user-read-email  user-top-read playlist-modify-public playlist-modify-private"
+	ARTISTNAME = "King gnu"
+	TRACKNAME  = "Supernova"
 	//state        = "randomStateString"   // 隨機字串，用於防止 CSRF 攻擊
 )
 
 var (
-	currentAccessToken   string // 保存當前的 Access Token
-	currentRefreshToken string // 保存 Refresh Token
-	tokenExpiresAt      int64  // Access Token 過期的 Unix 時間戳
-	processedRequests = make(map[string]bool) // 紀錄處理過的授權碼
+	currentAccessToken  string                  // 保存當前的 Access Token
+	currentRefreshToken string                  // 保存 Refresh Token
+	tokenExpiresAt      int64                   // Access Token 過期的 Unix 時間戳
+	processedRequests   = make(map[string]bool) // 紀錄處理過的授權碼
 )
 
 type TokenResponse struct {
@@ -64,18 +64,23 @@ type Track struct {
 }
 
 type TemplateData struct {
-	UserData   User
-	SignerData Signer
-	PlaylistData Playlist
+	UserData        User
+	SignerData      Signer
+	PlaylistData    Playlist
 	SearchTrackData Track
 }
 
-var userdata user
-var signerdata signer
+type Playlist struct{
+	ID string
+	
+}
+
+var userdata User
+var signerdata Signer
 var playlistdata Playlist
 var playlistpointer *Playlist
 
-//新增到我的收藏的tracks
+// 新增到我的收藏的tracks
 var trackURIs = []string{
 	"spotify:track:24ntZeyCrVePmN3nUYhfLx",
 	"spotify:track:1pCcNaCodPssCc8Aq68gPS",
@@ -107,7 +112,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		UserData:        userdata,
 		SignerData:      signerdata,
 		SearchTrackData: testGetTracks,
-		PlaylistData: playlistdata,
+		PlaylistData:    playlistdata,
 	}
 
 	err = temp.Execute(w, data)
@@ -135,9 +140,10 @@ func generateAuthURL() string {
 func startServer() {
 
 	http.HandleFunc("/userinfo", handler)
-	
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		authURL := generateAuthURL()
+		fmt.Println("authURL: ", authURL)
 		//fmt.Fprintf(w, "請點擊以下連結進行授權：<a href='%s'>Spotify 授權</a>", authURL)
 		http.Redirect(w, r, authURL, http.StatusSeeOther)
 	})
@@ -409,7 +415,6 @@ func searchArtist(ARTISTNAME string, accessToken string) error {
 		return err
 	}
 
-
 	// 搜索歌手 API 的基础 URL 和参数
 	baseSearchURL := "https://api.spotify.com/v1/search"
 	params := url.Values{}
@@ -489,7 +494,7 @@ func searchArtist(ARTISTNAME string, accessToken string) error {
 	for _, track := range tracks {
 		trackInfo := track.(map[string]interface{})
 		trackName := trackInfo["name"].(string)
-		trackImageURL := trackInfo["album"].(map[string]interface{})["images	].([]interface{})[0].(map[string]interface{})["url"].(string)
+		trackImageURL := trackInfo["album"].(map[string]interface{})["images"].([]interface{})[0].(map[string]interface{})["url"].(string)
 		previewURL, _ := trackInfo["preview_url"].(string) // 預覽連結 null，因此需要安全提取
 
 		// 将歌曲信息加入到列表
@@ -509,11 +514,10 @@ func searchArtist(ARTISTNAME string, accessToken string) error {
 	return nil
 }
 
+/*req.SetBasicAuth(clientID, clientSecret)
+req.Header.Set("Content-Type", "application/x-www-form-urlencoded")*/
 
-	/*req.SetBasicAuth(clientID, clientSecret)
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")*/
-
-    client := &http.Client{}
+/*client := &http.Client{}
     resp, err := client.Do(req)
     if err != nil {
         return false, "", err
@@ -541,7 +545,7 @@ func searchArtist(ARTISTNAME string, accessToken string) error {
     }
 
     return false, "", nil
-}
+}*/
 
 func searchTrack(trackName string, accessToken string, inputTracks *Track) error {
 	// 確保 Token 有效
