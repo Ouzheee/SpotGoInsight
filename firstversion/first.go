@@ -25,7 +25,7 @@ var (
 	clientID     = "592fa46f290e4f1aa8b5768bbb802177"
 	clientSecret = "4ddd10a13f2a4c00af97c1916b21a8c2"
 	redirectURI  = "http://localhost:8086/callback"
-	// 向使用者要求的授權範圍
+	// 這是向使用者要求的授權範圍
 	scope      = "user-read-private user-read-email  user-top-read playlist-modify-public playlist-modify-private"
 	ARTISTNAME = "King gnu"
 	TRACKNAME  = "Supernova"
