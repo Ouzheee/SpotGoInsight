@@ -130,7 +130,6 @@
                 <button type="submit" class="btn btn-success">查詢</button>
             </form>
           </div>    
-      </div>
         <h1 class="text-center mb-4">歌手</h1>
         <!-- Display Singers -->
         <div class="row">
@@ -156,20 +155,21 @@
                     </div>
                 </div>
             {{end}}
-        </div>
-
-        <h2 class="mt-5">我的最愛歌手</h2>
-        <div class="row">
-            {{range .favorites}}
-                <div class="col-md-4">
-                    <div class="singer-card text-center">
-                        <img src="{{.ImageURL}}" width="80%" alt="{{.Name}}"> <!-- 假設這是歌手圖片 -->
-                        <h5>{{.Name}}</h5>
-                        <p>{{.Genre}}</p>
+            <h2 class="mt-5">我的最愛歌手</h2>
+            <div class="row">
+                {{range .favorites}}
+                    <div class="col-md-4">
+                        <div class="singer-card text-center">
+                            <img src="{{.ImageURL}}" width="80%" alt="{{.Name}}"> <!-- 假設這是歌手圖片 -->
+                            <h5>{{.Name}}</h5>
+                            <p>{{.Genre}}</p>
+                        </div>
                     </div>
-                </div>
-            {{end}}
+                {{end}}
+            </div>
         </div>
+    </div>
+       
 
      
 
