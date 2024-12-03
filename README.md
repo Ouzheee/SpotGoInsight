@@ -119,6 +119,7 @@ Spotify的嵌入功能就如同一個
 * 版本合併過程中，對於VS code 合併功能不熟悉，不小心就會合併錯誤，要重新修正code
 * Access token 常常在不同帳號間使用就爆錯，連輸入client ID 的畫面都跑不了
  或者新增下列程式後，原本可以運行的程式又突然抓不到token了
+* 把原本加到收藏的歌曲刪除後，新建的播放清單還是會有那首歌，試著用一樣的方法刪除TrackURIs中的指定歌曲，但會變成無法新建播放清單，待解決
 ```
 // Remove Singer (Delete Singer)
 	var this_song string
