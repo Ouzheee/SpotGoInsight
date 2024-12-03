@@ -107,13 +107,14 @@ Spotify的嵌入功能就如同一個
 ### 12/3進度
 
 #### 新增功能
-*新增匯出播放清單功能，可以在加入我的收藏後，前往專輯頁面，點擊畫面中央的匯出按鈕就會把收藏的匯出致使用者的spotify帳號![image](https://github.com/user-attachments/assets/bc0bf171-2999-4400-aeb4-66f9bbe452ea)
+* 新增匯出播放清單功能，可以在加入我的收藏後，前往專輯頁面，點擊畫面中央的匯出按鈕就會把收藏的匯出致使用者的spotify帳號![image](https://github.com/user-attachments/assets/bc0bf171-2999-4400-aeb4-66f9bbe452ea)
 並且新增的播放清單也會嵌入到畫面上
 ![image](https://github.com/user-attachments/assets/c0e6464e-1123-4bc9-8f59-9a23bb6452a3)
 
 * 使用者資料修復完成
   原本無法顯示照片、資料的問題解決，原因是user變數的設定錯誤跟重複混用，沒有傳送到HTML上
 * 播放清單可以在框框中命名，原本只能叫 我的收藏 變得可以自由命名
+* 些許介面美化，應該是最終版本，不會再更改了
 #### 遇到的問題
 * 版本合併過程中，對於VS code 合併功能不熟悉，不小心就會合併錯誤，要重新修正code
 * Access token 常常在不同帳號間使用就爆錯，連輸入client ID 的畫面都跑不了
