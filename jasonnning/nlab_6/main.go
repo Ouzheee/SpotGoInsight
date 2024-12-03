@@ -27,6 +27,10 @@ type Song2 struct {
 type User2 struct {
 	ClientID     string `json:"client_id"`
 	ClientSecret string `json:"client_secret"`
+	Name         string `json:"name"`
+	SpotifyURL   string `json:"spotify_url"`
+	ImageURL     string `json:"Imageurl"`
+	UserID       string `json:"userid"`
 }
 
 type Singer2 struct {
@@ -354,14 +358,25 @@ func main() {
 		}
 		token = tokentmp
 
-		// 返回成功消息
-		/*c.JSON(http.StatusOK, gin.H{
-			"message":       "成功獲取授權碼與 Token",
-			"access_token":  token.AccessToken,
-			"refresh_token": token.RefreshToken,
-		})*/
-
-		// 登入成功，跳轉到用戶頁面
+		err2 := getCurrentUserInfo(token.AccessToken)
+		if err2 != nil {
+			log.Println("獲取用戶資訊失敗:", err2)
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid ID format"})
+			return
+		} else {
+			fmt.Printf("\n抓使用者沒出錯\n")
+		}
+		//----------問題大概在這，變數的名稱沒統一，html沒抓到newuser---------
+		newUser := User2{
+			ClientID:     clientID,
+			ClientSecret: clientSecret,
+			Name:         userdata.Name,
+			SpotifyURL:   userdata.SpotifyURL,
+			ImageURL:     userdata.ImageURL,
+			UserID:       userdata.UserID,
+		}
+		fmt.Printf("User Image: %s\n", newUser.ImageURL)
+		users = append(users, newUser)
 		c.Redirect(http.StatusFound, "/user")
 	})
 
