@@ -61,7 +61,7 @@ var favoriteSongs []Song2
 var favoriteSingers []Singer2
 
 var favoriteTrackURIs = []string{} // 要新增的tracks
-var favoritePlaylistURL string //播放清單的外部連結
+var favoritePlaylistURL string     //播放清單的外部連結
 
 func main() {
 	r := gin.Default()
@@ -108,6 +108,9 @@ func main() {
 			"user": map[string]string{
 				"ClientID":     currentUser.ClientID,
 				"ClientSecret": currentUser.ClientSecret,
+				"Name":         currentUser.Name,
+				"ImageURL":     currentUser.ImageURL,
+				"SpotifyURL":   currentUser.SpotifyURL,
 			},
 		})
 	})
@@ -374,7 +377,7 @@ func main() {
 			fmt.Printf("\n抓使用者沒出錯\n")
 		}
 		//----------問題大概在這，變數的名稱沒統一，html沒抓到newuser---------
-		newUser := User2{
+		currentUser = &User2{
 			ClientID:     clientID,
 			ClientSecret: clientSecret,
 			Name:         userdata.Name,
@@ -382,8 +385,8 @@ func main() {
 			ImageURL:     userdata.ImageURL,
 			UserID:       userdata.UserID,
 		}
-		fmt.Printf("User Image: %s\n", newUser.ImageURL)
-		users = append(users, newUser)
+		fmt.Printf("User Image: %s\n", currentUser.ImageURL)
+		users = append(users, *currentUser)
 		c.Redirect(http.StatusFound, "/user")
 	})
 

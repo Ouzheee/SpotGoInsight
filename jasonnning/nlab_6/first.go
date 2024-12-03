@@ -13,11 +13,11 @@ import (
 
 //clientID
 //林亦潔 592fa46f290e4f1aa8b5768bbb802177
-//歐哲熏
+//歐哲熏 ab43d6c3cbdc479ca53096f213e19f2a
 
 //clientSecret
 //林亦潔 4ddd10a13f2a4c00af97c1916b21a8c2
-//歐哲熏
+//歐哲熏 5e3c41d08b5f467799668a62b566aa18 	
 
 var (
 	clientID     = "592fa46f290e4f1aa8b5768bbb802177"
@@ -185,12 +185,12 @@ func startServer() {
 
 		// 調用 Spotify API
 		// 1. get user information
-			err = getCurrentUserInfo(token.AccessToken)
-			if err != nil {
-				log.Println("取得UserInfo失敗: ", err)
-				http.Error(w, "無法取得UserInfo", http.StatusInternalServerError)
-				return
-			}
+		err = getCurrentUserInfo(token.AccessToken)
+		if err != nil {
+			log.Println("取得UserInfo失敗: ", err)
+			http.Error(w, "無法取得UserInfo", http.StatusInternalServerError)
+			return
+		}
 		// 2. serach artist and top tracks
 		err = searchArtist(ARTISTNAME, token.AccessToken)
 		if err != nil {
