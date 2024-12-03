@@ -418,7 +418,8 @@ func searchArtist(ARTISTNAME string, accessToken string) error {
 	// 搜索歌手 API 的基础 URL 和参数
 	baseSearchURL := "https://api.spotify.com/v1/search"
 	params := url.Values{}
-	params.Set("q", ARTISTNAME)
+	//params.Set("q", ARTISTNAME)
+	params.Set("q", fmt.Sprintf(`"%s"`, ARTISTNAME))
 	params.Set("type", "artist")
 	params.Set("limit", "1")
 
@@ -661,7 +662,8 @@ func searchTrack(trackName string, accessToken string, inputTracks *Track) error
 	// 搜索歌曲 API 的基础 URL 和参数
 	baseSearchURL := "https://api.spotify.com/v1/search"
 	params := url.Values{}
-	params.Set("q", trackName)
+	//params.Set("q", trackName)
+	params.Set("q", fmt.Sprintf(`"%s"`, trackName))
 	params.Set("type", "track")
 	params.Set("limit", "1")
 
