@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Info</title>
+</head>
+<body>
+    <h1>Name: {{.UserData.Name}}</h1>
+    <iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/18nZWRpJIHzgb1SQr4ncwb?utm_source=generator" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+    <h1>External URLL: <a href="{{.UserData.SpotifyURL}}" target="_blank">{{.UserData.SpotifyURL}}</a></h1>
+    <h1>Image URL:</h1>
+    <img src="{{.UserData.ImageURL}}" alt="User Image" style="width:150px; height:150px; border-radius:50%;">
+
+    <h1>The artist you searched: {{.SignerData.Name}}</h1>
+    <h1>Artist ID: {{.SignerData.SignerID}}</h1>
+
+    <h1>Top Tracks:</h1>
+    <ul>
+        {{range .SignerData.TopTracks}}
+        <li style="margin-bottom: 20px;">
+            <img src="{{.ImageURL}}" alt="{{.Name}}" style="width:100px; height:100px; margin-right: 10px; vertical-align: middle;">
+            <a href="{{.PreviewURL}}" target="_blank" style="font-size: 18px; vertical-align: middle;">{{.Name}}</a>
+        </li>
+        {{end}}
+    </ul>
+
+    <h1>Search Tracks: {{.SearchTrackData.Name}}</h1>
+    <iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/18nZWRpJIHzgb1SQr4ncwb?utm_source=generator" width="80%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy;"></iframe>
+        <li style="margin-bottom: 20px;">
+            <img src="{{.SearchTrackData.ImageURL}}" alt="{{.SearchTrackData.Name}}" style="width:100px; height:100px; margin-right: 10px; vertical-align: middle;">
+            <a href="{{.SearchTrackData.PreviewURL}}" target="_blank" style="font-size: 18px; vertical-align: middle;">{{.SearchTrackData.Name}}</a>
+        </li>
+        <iframe style="border-radius:12px" src="{{.SearchTrackData.EmbedURL}}" width="100%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+    <h1>Search Track Album Information</h1>
+    <ul>
+        <li>Album Name: {{.SearchTrackData.Album.Name}}</li>
+        <li>Album ID: {{.SearchTrackData.Album.ID}}</li>
+    </ul>
+        
+</body>
+</html>

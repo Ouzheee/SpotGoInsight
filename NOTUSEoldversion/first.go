@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+	"github.com/gin-gonic/gin"
+	"strconv"
 )
 
 //clientID
@@ -22,7 +24,7 @@ import (
 var (
 	clientID     = "592fa46f290e4f1aa8b5768bbb802177"
 	clientSecret = "4ddd10a13f2a4c00af97c1916b21a8c2"
-	redirectURI  = "http://localhost:8080/callback"
+	redirectURI  = "http://localhost:8086/callback"
 	// 向使用者要求的授權範圍
 	scope      = "user-read-private user-read-email  user-top-read playlist-modify-public playlist-modify-private"
 	ARTISTNAME = "King gnu"
@@ -50,11 +52,10 @@ type User struct {
 	UserID     string
 }
 
-type Singer struct {
-	SingerID  string
+type Signer struct {
+	SignerID  string
 	Name      string
 	TopTracks []Track
-	ImageURL  string
 }
 
 type Playlist struct {
@@ -69,12 +70,11 @@ type Track struct {
 	ImageURL   string
 	PreviewURL string
 	Album      Album
-	Singer     string
 }
 
 type TemplateData struct {
-	UserData        User2
-	SingerData      Singer
+	UserData        User
+	SignerData      Signer
 	PlaylistData    Playlist
 	SearchTrackData Track
 }
@@ -85,15 +85,21 @@ type Album struct {
 	Total_teacks int
 }
 
-var userdata User2
-var singerdata Singer
-var trackdata Track
+var userdata User
+var signerdata Signer
+var testGetTracks Track
 var playlistdata Playlist
 var playlistpointer *Playlist
-var token *TokenResponse
+
+// 要新增的tracks
+var trackURIs = []string{
+	"spotify:track:24ntZeyCrVePmN3nUYhfLx",
+	"spotify:track:1pCcNaCodPssCc8Aq68gPS",
+	"spotify:track:7kJBYHytiARJlRygfg5VCn",
+}
 
 // 連接html
-/*func getUserInfo(userInfo map[string]interface{}) {
+func getUserInfo(userInfo map[string]interface{}) {
 	externalUrls := userInfo["external_urls"].(map[string]interface{})
 	images := userInfo["images"].([]interface{})
 
@@ -103,7 +109,7 @@ var token *TokenResponse
 		ImageURL:   images[0].(map[string]interface{})["url"].(string),
 		UserID:     userInfo["id"].(string),
 	}
-}*/
+}
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	temp, err := template.ParseFiles("userInfo.html")
@@ -115,8 +121,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	data := TemplateData{
 		UserData:        userdata,
-		SingerData:      singerdata,
-		SearchTrackData: trackdata,
+		SignerData:      signerdata,
+		SearchTrackData: testGetTracks,
 		PlaylistData:    playlistdata,
 	}
 
@@ -185,12 +191,12 @@ func startServer() {
 
 		// 調用 Spotify API
 		// 1. get user information
-			err = getCurrentUserInfo(token.AccessToken)
-			if err != nil {
-				log.Println("取得UserInfo失敗: ", err)
-				http.Error(w, "無法取得UserInfo", http.StatusInternalServerError)
-				return
-			}
+		_, err = getCurrentUserInfo(token.AccessToken)
+		if err != nil {
+			log.Println("取得UserInfo失敗: ", err)
+			http.Error(w, "無法取得UserInfo", http.StatusInternalServerError)
+			return
+		}
 		// 2. serach artist and top tracks
 		err = searchArtist(ARTISTNAME, token.AccessToken)
 		if err != nil {
@@ -222,14 +228,13 @@ func startServer() {
 		}
 
 		// 新增 Tracks 到播放清單
-		err = addTracksToPlaylist(playlistdata.ID, favoriteTrackURIs)
+		err = addTracksToPlaylist(playlistdata.ID, trackURIs)
 		if err != nil {
 			log.Println("新增歌曲到播放清單失敗: ", err)
 			http.Error(w, "無法新增歌曲到播放清單", http.StatusInternalServerError)
 			return
 		}
-		// 4. search track
-		err = searchTrack(TRACKNAME, token.AccessToken, &trackdata)
+		err = searchTrack(TRACKNAME, token.AccessToken, &testGetTracks)
 		if err != nil {
 			log.Println("搜索歌曲失敗:", err)
 			http.Error(w, "無法搜尋歌曲", http.StatusInternalServerError)
@@ -237,7 +242,7 @@ func startServer() {
 		}
 		http.Redirect(w, r, "/userinfo", http.StatusSeeOther)
 		/*fmt.Fprintf(w, "Spotify API 呼叫成功！用戶資訊：%v", userInfo)
-		fmt.Fprintf(w, "Singer ID API 呼叫成功！歌手 %s 的ID：%v", ARTISTNAME, SingerID)*/
+		fmt.Fprintf(w, "Signer ID API 呼叫成功！歌手 %s 的ID：%v", ARTISTNAME, SignerID)*/
 	})
 
 	fmt.Println("伺服器啟動於 http://localhost:8086")
@@ -347,16 +352,16 @@ func ensureValidAccessToken() error {
 }
 
 // API: get user information
-func getCurrentUserInfo(accessToken string) error {
+func getCurrentUserInfo(accessToken string) (map[string]interface{}, error) {
 	// 確保 Token 有效
 	if err := ensureValidAccessToken(); err != nil {
-		return err
+		return nil, err
 	}
 
 	// 繼續使用有效 Token 調用 API
 	req, err := http.NewRequest("GET", "https://api.spotify.com/v1/me", nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// 設置授權標頭，使用 Bearer Token 認證
@@ -367,14 +372,14 @@ func getCurrentUserInfo(accessToken string) error {
 	// 發送請求並接收回應
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	// 確保在函式結束時關閉回應的主體，避免資源泄漏
 	defer resp.Body.Close()
 
 	// 檢查回應的 HTTP 狀態碼
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("API 請求失敗，狀態碼: %d", resp.StatusCode)
+		return nil, fmt.Errorf("API 請求失敗，狀態碼: %d", resp.StatusCode)
 	}
 
 	// 定義一個通用的 map 用於存放解析後的用戶資訊
@@ -382,27 +387,25 @@ func getCurrentUserInfo(accessToken string) error {
 	// 使用 JSON 解碼器將回應主體中的 JSON 資料解碼到 userInfo map 中
 	err = json.NewDecoder(resp.Body).Decode(&userInfo)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	//arrange userinfo
 	externalUrls := userInfo["external_urls"].(map[string]interface{})
 	images := userInfo["images"].([]interface{})
 
-	userdata = User2{
+	userdata = User{
 		Name:       userInfo["display_name"].(string),
 		SpotifyURL: externalUrls["spotify"].(string),
 		ImageURL:   images[0].(map[string]interface{})["url"].(string),
 		UserID:     userInfo["id"].(string),
 	}
 
-	return nil
+	return userInfo, nil
 }
 
 // API: search artist
 func searchArtist(ARTISTNAME string, accessToken string) error {
-	fmt.Println("---search---")
-
 	// 確保 Token 有效
 	if err := ensureValidAccessToken(); err != nil {
 		return err
@@ -411,8 +414,7 @@ func searchArtist(ARTISTNAME string, accessToken string) error {
 	// 搜索歌手 API 的基础 URL 和参数
 	baseSearchURL := "https://api.spotify.com/v1/search"
 	params := url.Values{}
-	//params.Set("q", ARTISTNAME)
-	params.Set("q", fmt.Sprintf(`"%s"`, ARTISTNAME))
+	params.Set("q", ARTISTNAME)
 	params.Set("type", "artist")
 	params.Set("limit", "1")
 
@@ -453,19 +455,8 @@ func searchArtist(ARTISTNAME string, accessToken string) error {
 		return fmt.Errorf("未找到名为 '%s' 的歌手", ARTISTNAME)
 	}
 
-	// 取得第一個歌手
 	artist := items[0].(map[string]interface{})
 	artistID := artist["id"].(string)
-	artistName := artist["name"].(string)
-
-	// 處理圖片（images）
-	var artistImageURL string
-	if images, ok := artist["images"].([]interface{}); ok && len(images) > 0 {
-		image := images[0].(map[string]interface{})
-		artistImageURL = image["url"].(string)
-	} else {
-		artistImageURL = "未提供圖片"
-	}
 
 	// 调用 Top Tracks API
 	topTracksURL := fmt.Sprintf("https://api.spotify.com/v1/artists/%s/top-tracks?market=US", artistID)
@@ -511,17 +502,15 @@ func searchArtist(ARTISTNAME string, accessToken string) error {
 		fmt.Printf(" %s: %s\n", trackName, previewURL)
 	}
 
-	// 将歌手信息和热门歌曲填充到 singerdata 中
-	singerdata.SingerID = artistID
-	singerdata.Name = artistName
-	singerdata.TopTracks = topTracks
-	singerdata.ImageURL = artistImageURL
+	// 将歌手信息和热门歌曲填充到 signerdata 中
+	signerdata.SignerID = artistID
+	signerdata.Name = ARTISTNAME
+	signerdata.TopTracks = topTracks
 
 	return nil
 }
 
 func createPlaylist(userID string, playlistName, playlistDescription string) (*Playlist, error) {
-	fmt.Println("===start create playlist===")
 	// 確保 Access Token 有效
 	if err := ensureValidAccessToken(); err != nil {
 		return nil, err
@@ -570,8 +559,7 @@ func createPlaylist(userID string, playlistName, playlistDescription string) (*P
 }
 
 // API: add Tracks To Playlist
-func addTracksToPlaylist(playlistID string, favoriteTrackURIs []string) error {
-	fmt.Println("===start add tracks to playlist===")
+func addTracksToPlaylist(playlistID string, trackURIs []string) error {
 	// 確保 Access Token 有效
 	if err := ensureValidAccessToken(); err != nil {
 		return err
@@ -579,7 +567,7 @@ func addTracksToPlaylist(playlistID string, favoriteTrackURIs []string) error {
 
 	// 建立請求資料
 	data := map[string]interface{}{
-		"uris": favoriteTrackURIs, // 包含 Tracks URI 的陣列
+		"uris": trackURIs, // 包含 Tracks URI 的陣列
 	}
 	// 將資料轉換為 JSON 格式
 	body, _ := json.Marshal(data)
@@ -657,8 +645,7 @@ func searchTrack(trackName string, accessToken string, inputTracks *Track) error
 	// 搜索歌曲 API 的基础 URL 和参数
 	baseSearchURL := "https://api.spotify.com/v1/search"
 	params := url.Values{}
-	//params.Set("q", trackName)
-	params.Set("q", fmt.Sprintf(`"%s"`, trackName))
+	params.Set("q", trackName)
 	params.Set("type", "track")
 	params.Set("limit", "1")
 
@@ -702,38 +689,53 @@ func searchTrack(trackName string, accessToken string, inputTracks *Track) error
 	track := items[0].(map[string]interface{})
 	trackID := track["id"].(string)
 	inputTracks.ID = trackID
-	inputTracks.Name = track["name"].(string)
-	inputTracks.PreviewURL, _ = track["preview_url"].(string)
+	inputTracks.Name = TRACKNAME
+
+	//Use track ID to catch the Image of track and  relation ship between others
+	trackDetailsURL := fmt.Sprintf("https://api.spotify.com/v1/tracks/%s", trackID)
+	req, err = http.NewRequest("GET", trackDetailsURL, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+
+	// Execute the HTTP request for track details
+	resp, err = client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	// Validate the response
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to get track details. Status code: %d", resp.StatusCode)
+	}
+
+	// Parse the track details
+	var trackInfo map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&trackInfo); err != nil {
+		return err
+	}
 
 	// Extract album image URL and other details
-	album := track["album"].(map[string]interface{})
+	album := trackInfo["album"].(map[string]interface{})
 	inputTracks.Album.Name = album["name"].(string)
 	inputTracks.Album.ID = album["id"].(string)
 	inputTracks.Album.Release_date = album["release_date"].(string)
-
 	images := album["images"].([]interface{})
-	image := images[0].(map[string]interface{})
-	inputTracks.ImageURL, _ = image["url"].(string)
+	inputTracks.URL = images[0].(map[string]interface{})["url"].(string)
+	previewURL, _ := trackInfo["preview_url"].(string)
+	inputTracks.PreviewURL = previewURL
 
-	artists := track["artists"].([]interface{})
-	artist := artists[0].(map[string]interface{})
-	inputTracks.Singer, _ = artist["name"].(string)
-
-	externalURL := track["external_urls"].(map[string]interface{})
-	inputTracks.URL, _ = externalURL["spotify"].(string)
-
-	fmt.Println("track name: ", inputTracks.Name)
-	fmt.Println("ID: ", inputTracks.ID)
-	fmt.Println("URL: ", inputTracks.URL)
-	fmt.Println("ImageURL: ", inputTracks.ImageURL)
-	fmt.Println("PreviewURL: ", inputTracks.PreviewURL)
-	fmt.Println("Singer: ", inputTracks.Singer)
-	fmt.Println("year: ", inputTracks.Album.Release_date)
+	//提取作家
+	artists := trackInfo["artists"].([]interface{})
+	firstArtist := artists[0].(map[string]interface{})
+	sign_name := firstArtist["name"].(string)
 
 	// Log or store the track image and other details
 	//fmt.Printf("Track: %s\nImage: %s\n", trackName, imageURL)
-	//fmt.Printf("\nSearch result:  TestgetTracks trackname: %s   trackURL: %s  trackID: %s  trackPreview: %s\n", trackdata.Name, trackdata.URL, trackdata.ID, trackdata.PreviewURL)
-	//fmt.Printf(" Album name: %s  Album release date: %s  the singer is %s\n", inputTracks.Album.Name, inputTracks.Album.Release_date, sing_name) //測試專輯的使用
+	fmt.Printf("\nSearch result:  TestgetTracks trackname: %s   trackURL: %s  trackID: %s  trackPreview: %s\n", testGetTracks.Name, testGetTracks.URL, testGetTracks.ID, testGetTracks.PreviewURL)
+	fmt.Printf(" Album name: %s  Album release date: %s  the signer is %s\n", inputTracks.Album.Name, inputTracks.Album.Release_date, sign_name) //測試專輯的使用
 	return nil
 }
 
