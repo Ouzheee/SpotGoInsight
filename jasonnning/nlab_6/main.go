@@ -64,6 +64,7 @@ var favoriteTrackURIs = []string{} // 要新增的tracks
 var favoritePlaylistURL string     //播放清單的外部連結
 
 func main() {
+	gin.SetMode(gin.ReleaseMode) // Set Gin to release mode
 	r := gin.Default()
 
 	// 加載模板文件
@@ -118,6 +119,7 @@ func main() {
 	r.GET("/favorite", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "favorite.html", gin.H{
 			"favorites": favoriteSongs,
+			"playlist":  playlistdata,
 		})
 	})
 
@@ -216,7 +218,7 @@ func main() {
 				trackuri := "spotify:track:" + songList[i].SongID
 				fmt.Println("===add favorite song: ", songList[i].Name, ", id: ", songList[i].SongID, "===")
 				fmt.Println("===trackURI: ", trackuri)
-				favoriteTrackURIs = append(favoriteTrackURIs, trackuri)
+				playlistdata.TrackURIs = append(playlistdata.TrackURIs, trackuri)
 				break
 			}
 		}
@@ -288,6 +290,8 @@ func main() {
 		c.Redirect(http.StatusFound, "/singer")
 	})
 
+	// Remove Singer (Delete Singer)
+	var this_song string
 	// Remove Song (Delete Song)
 	r.GET("/song/delete/:id", func(c *gin.Context) {
 		id, err := strconv.Atoi(c.Param("id"))
@@ -299,29 +303,27 @@ func main() {
 		for i, song := range songList {
 			if song.ID == id {
 				// 從專輯列表中刪除
+				this_song = song.Name
 				songList = append(songList[:i], songList[i+1:]...)
 				break
 			}
 		}
-		c.Redirect(http.StatusFound, "/song")
-	})
 
-	// Remove Singer (Delete Singer)
-	r.GET("/singer/delete/:id", func(c *gin.Context) {
-		id, err := strconv.Atoi(c.Param("id"))
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid ID format"})
-			return
-		}
-
-		for i, singer := range singerList {
-			if singer.ID == id {
-				// 從歌手列表中刪除
-				singerList = append(singerList[:i], singerList[i+1:]...)
+		for i, song := range favoriteSongs {
+			if song.Name == this_song {
+				// 從最愛中移除
+				favoriteSongs = append(favoriteSongs[:i], favoriteSongs[i+1:]...)
+				for j, songInList := range songList {
+					if songInList.ID == id {
+						songList[j].IsFavorite = false
+						break
+					}
+				}
 				break
 			}
 		}
-		c.Redirect(http.StatusFound, "/singer")
+
+		c.Redirect(http.StatusFound, "/song")
 	})
 
 	//login輸入操作
@@ -376,7 +378,6 @@ func main() {
 		} else {
 			fmt.Printf("\n抓使用者沒出錯\n")
 		}
-		//----------問題大概在這，變數的名稱沒統一，html沒抓到newuser---------
 		currentUser = &User2{
 			ClientID:     clientID,
 			ClientSecret: clientSecret,
@@ -421,14 +422,16 @@ func main() {
 		}
 
 		// 新增 Tracks 到播放清單
-		err = addTracksToPlaylist(playlistdata.ID, favoriteTrackURIs)
+		err = addTracksToPlaylist(playlistdata.ID, playlistdata.TrackURIs)
 		if err != nil {
 			log.Println("新增歌曲到播放清單失敗: ", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "無法新增歌曲到播放清單"})
 			return
 		}
-		favoritePlaylistURL = "https://open.spotify.com/playlist/" + playlistdata.ID
-		fmt.Println("favoritePlaylistURL: ", favoritePlaylistURL)
+
+		playlistdata.ExternalURL = "https://open.spotify.com/playlist/" + playlistdata.ID
+		fmt.Println("favoritePlaylistURL: ", playlistdata.ExternalURL)
+		playlistdata.EmbedURL = fmt.Sprintf("https://open.spotify.com/embed/playlist/%s?utm_source=generator", playlistdata.ID)
 
 		c.Redirect(http.StatusFound, "/favorite")
 	})
