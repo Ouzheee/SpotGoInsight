@@ -146,6 +146,17 @@
         </div>
     </nav>
 
+    <div class="mt-5">
+        <h3>輸出撥放清單名稱</h3>
+        <form action="/favorite/saveFavorite" method="POST">
+            <div class="mb-3">
+                <label for="playlistName" class="form-label">播放清單名稱</label>
+                <input type="text" class="form-control" id="playlistname" name="playlistname" placeholder="请输入播放清單名稱" required>
+            </div>
+            <button type="submit" class="btn btn-success">Enter</button>
+        </form>
+    </div>
+
     <div class="container my-5 text-center">
         <!-- Display Songs -->
         <h1 class="text-center mb-4">我的收藏</h1>

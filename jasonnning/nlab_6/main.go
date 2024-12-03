@@ -218,7 +218,7 @@ func main() {
 				trackuri := "spotify:track:" + songList[i].SongID
 				fmt.Println("===add favorite song: ", songList[i].Name, ", id: ", songList[i].SongID, "===")
 				fmt.Println("===trackURI: ", trackuri)
-				playlistdata.TrackURIs = append(playlistdata.TrackURIs, trackuri)
+				//playlistdata.TrackURIs = append(playlistdata.TrackURIs, trackuri)
 				playlistdata.TrackURIs = append(playlistdata.TrackURIs, trackuri)
 				break
 			}
@@ -393,6 +393,12 @@ func main() {
 	})
 
 	r.POST("/favorite/saveFavorite", func(c *gin.Context) {
+		playlistname := c.PostForm("playlistname")
+		if playlistname == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid input"})
+			return
+		}
+		fmt.Println("enter name: ", playlistname)
 		err := getCurrentUserInfo(token.AccessToken)
 		if err != nil {
 			log.Println("取得UserInfo失敗:", err)
@@ -400,19 +406,18 @@ func main() {
 			return
 		}
 
-		exists, playlistID, err := playlistExists(token.AccessToken, "我的收藏")
+		exists, playlistID, err := playlistExists(token.AccessToken, playlistname)
 		if err != nil {
 			log.Println("檢查播放清單失敗:", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "檢查播放清單失敗"})
 			return
 		}
-
 		if exists {
-			fmt.Println("播放清單已存在，ID:", playlistID)
 			playlistdata.ID = playlistID
-			playlistdata.Name = "我的收藏"
+			playlistdata.Name = playlistname
 		} else {
-			playlistpointer, err = createPlaylist(userdata.UserID, "我的收藏", "From SpotGoInsight")
+			playlistpointer, err = createPlaylist(userdata.UserID, playlistname, "From SpotGoInsight")
+
 			if err != nil {
 				log.Println("新增播放清單失敗: ", err)
 				c.JSON(http.StatusInternalServerError, gin.H{"message": "無法新增播放清單"})
@@ -421,9 +426,7 @@ func main() {
 			playlistdata.ID = playlistpointer.ID
 			playlistdata.Name = playlistpointer.Name
 		}
-
 		// 新增 Tracks 到播放清單
-		err = addTracksToPlaylist(playlistdata.ID, playlistdata.TrackURIs)
 		err = addTracksToPlaylist(playlistdata.ID, playlistdata.TrackURIs)
 		if err != nil {
 			log.Println("新增歌曲到播放清單失敗: ", err)
