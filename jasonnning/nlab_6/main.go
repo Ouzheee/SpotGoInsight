@@ -219,6 +219,7 @@ func main() {
 				fmt.Println("===add favorite song: ", songList[i].Name, ", id: ", songList[i].SongID, "===")
 				fmt.Println("===trackURI: ", trackuri)
 				playlistdata.TrackURIs = append(playlistdata.TrackURIs, trackuri)
+				playlistdata.TrackURIs = append(playlistdata.TrackURIs, trackuri)
 				break
 			}
 		}
@@ -422,6 +423,7 @@ func main() {
 		}
 
 		// 新增 Tracks 到播放清單
+		err = addTracksToPlaylist(playlistdata.ID, playlistdata.TrackURIs)
 		err = addTracksToPlaylist(playlistdata.ID, playlistdata.TrackURIs)
 		if err != nil {
 			log.Println("新增歌曲到播放清單失敗: ", err)
