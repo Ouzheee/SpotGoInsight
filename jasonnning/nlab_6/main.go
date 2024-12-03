@@ -105,6 +105,10 @@ func main() {
 			"user": map[string]string{
 				"ClientID":     currentUser.ClientID,
 				"ClientSecret": currentUser.ClientSecret,
+				"Name":         currentUser.Name,
+				"SpotifyURL":   currentUser.SpotifyURL,
+				"ImageURL":     currentUser.ImageURL,
+				"UserID":       currentUser.UserID,
 			},
 		})
 	})
@@ -367,16 +371,13 @@ func main() {
 			fmt.Printf("\n抓使用者沒出錯\n")
 		}
 		//----------問題大概在這，變數的名稱沒統一，html沒抓到newuser---------
-		newUser := User2{
-			ClientID:     clientID,
-			ClientSecret: clientSecret,
-			Name:         userdata.Name,
-			SpotifyURL:   userdata.SpotifyURL,
-			ImageURL:     userdata.ImageURL,
-			UserID:       userdata.UserID,
-		}
-		fmt.Printf("User Image: %s\n", newUser.ImageURL)
-		users = append(users, newUser)
+		currentUser.Name = userdata.Name
+		currentUser.SpotifyURL = userdata.SpotifyURL
+		currentUser.ImageURL = userdata.ImageURL
+		currentUser.UserID = userdata.UserID
+
+		fmt.Printf("User Image: %s\n", currentUser.ImageURL)
+		users = append(users, *currentUser)
 		c.Redirect(http.StatusFound, "/user")
 	})
 
