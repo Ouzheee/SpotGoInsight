@@ -152,7 +152,8 @@
         <!-- 按鈕 -->
         <form action="/favorite/saveFavorite" method="POST">
             <button type="submit" class="btn btn-primary">匯出播放清單</button>
-        </form>    
+        </form>
+        <iframe style="border-radius:12px" src="{{.playlist.EmbedURL}}" width="100%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
         <a href="/song" class="btn">專輯模式</a>
         <div class="row">
             {{range .favorites}}

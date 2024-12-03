@@ -118,6 +118,7 @@ func main() {
 	r.GET("/favorite", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "favorite.html", gin.H{
 			"favorites": favoriteSongs,
+			"playlist": playlistdata,
 		})
 	})
 
@@ -216,7 +217,7 @@ func main() {
 				trackuri := "spotify:track:" + songList[i].SongID
 				fmt.Println("===add favorite song: ", songList[i].Name, ", id: ", songList[i].SongID, "===")
 				fmt.Println("===trackURI: ", trackuri)
-				favoriteTrackURIs = append(favoriteTrackURIs, trackuri)
+				playlistdata.TrackURIs = append(playlistdata.TrackURIs, trackuri)
 				break
 			}
 		}
@@ -421,14 +422,16 @@ func main() {
 		}
 
 		// 新增 Tracks 到播放清單
-		err = addTracksToPlaylist(playlistdata.ID, favoriteTrackURIs)
+		err = addTracksToPlaylist(playlistdata.ID, playlistdata.TrackURIs)
 		if err != nil {
 			log.Println("新增歌曲到播放清單失敗: ", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "無法新增歌曲到播放清單"})
 			return
 		}
-		favoritePlaylistURL = "https://open.spotify.com/playlist/" + playlistdata.ID
-		fmt.Println("favoritePlaylistURL: ", favoritePlaylistURL)
+		
+		playlistdata.ExternalURL = "https://open.spotify.com/playlist/" + playlistdata.ID
+		fmt.Println("favoritePlaylistURL: ", playlistdata.ExternalURL)
+		playlistdata.EmbedURL = fmt.Sprintf("https://open.spotify.com/embed/playlist/%s?utm_source=generator", playlistdata.ID)
 
 		c.Redirect(http.StatusFound, "/favorite")
 	})
