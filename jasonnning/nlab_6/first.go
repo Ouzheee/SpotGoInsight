@@ -60,6 +60,9 @@ type Singer struct {
 type Playlist struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
+	EmbedURL string `json:"embedurl"`
+	ExternalURL string `json:"externalurl"`
+	TrackURIs []string
 }
 
 type Track struct {
@@ -222,7 +225,7 @@ func startServer() {
 		}
 
 		// 新增 Tracks 到播放清單
-		err = addTracksToPlaylist(playlistdata.ID, favoriteTrackURIs)
+		err = addTracksToPlaylist(playlistdata.ID, playlistdata.TrackURIs)
 		if err != nil {
 			log.Println("新增歌曲到播放清單失敗: ", err)
 			http.Error(w, "無法新增歌曲到播放清單", http.StatusInternalServerError)
