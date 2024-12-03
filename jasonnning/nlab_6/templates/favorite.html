@@ -106,6 +106,23 @@
         .song-title {
             margin-top: 10px; /* 圖片和標題之間的行距 */
         }
+
+        /* 按鈕設計 */
+        .btn-primary {
+            background-color: #1db954;
+            border: none;
+            padding: 12px;
+            font-size: 1.2rem;
+            width: 30%;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: #1db954;
+            transform: translateY(-3px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
     </style>
 </head>
 
@@ -132,6 +149,10 @@
     <div class="container my-5">
         <!-- Display Songs -->
         <h1 class="text-center mb-4">專輯收藏列表</h1>
+        <!-- 按鈕 -->
+        <form action="/favorite/saveFavorite" method="POST">
+            <button type="submit" class="btn btn-primary">匯出播放清單</button>
+        </form>    
         <a href="/song" class="btn">專輯模式</a>
         <div class="row">
             {{range .favorites}}

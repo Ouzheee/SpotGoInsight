@@ -56,6 +56,9 @@ var (
 var favoriteSongs []Song2
 var favoriteSingers []Singer2
 
+var favoriteTrackURIs = []string{} // 要新增的tracks
+var favoritePlaylistURL string //播放清單的外部連結
+
 func main() {
 	r := gin.Default()
 
@@ -203,6 +206,10 @@ func main() {
 			if song.ID == id {
 				songList[i].IsFavorite = true // 加入最愛
 				favoriteSongs = append(favoriteSongs, songList[i])
+				trackuri := "spotify:track:" + songList[i].SongID
+				fmt.Println("===add favorite song: ", songList[i].Name, ", id: ", songList[i].SongID, "===")
+				fmt.Println("===trackURI: ", trackuri)
+				favoriteTrackURIs = append(favoriteTrackURIs, trackuri)
 				break
 			}
 		}
@@ -363,6 +370,49 @@ func main() {
 
 		// 登入成功，跳轉到用戶頁面
 		c.Redirect(http.StatusFound, "/user")
+	})
+
+	r.POST("/favorite/saveFavorite", func(c *gin.Context) {
+		err := getCurrentUserInfo(token.AccessToken)
+		if err != nil {
+			log.Println("取得UserInfo失敗:", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "無法取得UserInfo"})
+			return
+		}
+
+		exists, playlistID, err := playlistExists(token.AccessToken, "我的收藏")
+		if err != nil {
+			log.Println("檢查播放清單失敗:", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "檢查播放清單失敗"})
+			return
+		}
+
+		if exists {
+			fmt.Println("播放清單已存在，ID:", playlistID)
+			playlistdata.ID = playlistID
+			playlistdata.Name = "我的收藏"
+		} else {
+			playlistpointer, err = createPlaylist(userdata.UserID, "我的收藏", "From SpotGoInsight")
+			if err != nil {
+				log.Println("新增播放清單失敗: ", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"message": "無法新增播放清單"})
+				return
+			}
+			playlistdata.ID = playlistpointer.ID
+			playlistdata.Name = playlistpointer.Name
+		}
+
+		// 新增 Tracks 到播放清單
+		err = addTracksToPlaylist(playlistdata.ID, favoriteTrackURIs)
+		if err != nil {
+			log.Println("新增歌曲到播放清單失敗: ", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "無法新增歌曲到播放清單"})
+			return
+		}
+		favoritePlaylistURL = "https://open.spotify.com/playlist/" + playlistdata.ID
+		fmt.Println("favoritePlaylistURL: ", favoritePlaylistURL)
+
+		c.Redirect(http.StatusFound, "/favorite")
 	})
 
 	/*=========================================================================*/

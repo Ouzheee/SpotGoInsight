@@ -92,13 +92,6 @@ var playlistdata Playlist
 var playlistpointer *Playlist
 var token *TokenResponse
 
-// 要新增的tracks
-var trackURIs = []string{
-	"spotify:track:24ntZeyCrVePmN3nUYhfLx",
-	"spotify:track:1pCcNaCodPssCc8Aq68gPS",
-	"spotify:track:7kJBYHytiARJlRygfg5VCn",
-}
-
 // 連接html
 func getUserInfo(userInfo map[string]interface{}) {
 	externalUrls := userInfo["external_urls"].(map[string]interface{})
@@ -192,12 +185,12 @@ func startServer() {
 
 		// 調用 Spotify API
 		// 1. get user information
-		err = getCurrentUserInfo(token.AccessToken)
-		if err != nil {
-			log.Println("取得UserInfo失敗: ", err)
-			http.Error(w, "無法取得UserInfo", http.StatusInternalServerError)
-			return
-		}
+			err = getCurrentUserInfo(token.AccessToken)
+			if err != nil {
+				log.Println("取得UserInfo失敗: ", err)
+				http.Error(w, "無法取得UserInfo", http.StatusInternalServerError)
+				return
+			}
 		// 2. serach artist and top tracks
 		err = searchArtist(ARTISTNAME, token.AccessToken)
 		if err != nil {
@@ -229,7 +222,7 @@ func startServer() {
 		}
 
 		// 新增 Tracks 到播放清單
-		err = addTracksToPlaylist(playlistdata.ID, trackURIs)
+		err = addTracksToPlaylist(playlistdata.ID, favoriteTrackURIs)
 		if err != nil {
 			log.Println("新增歌曲到播放清單失敗: ", err)
 			http.Error(w, "無法新增歌曲到播放清單", http.StatusInternalServerError)
@@ -528,6 +521,7 @@ func searchArtist(ARTISTNAME string, accessToken string) error {
 }
 
 func createPlaylist(userID string, playlistName, playlistDescription string) (*Playlist, error) {
+	fmt.Println("===start create playlist===")
 	// 確保 Access Token 有效
 	if err := ensureValidAccessToken(); err != nil {
 		return nil, err
@@ -576,7 +570,8 @@ func createPlaylist(userID string, playlistName, playlistDescription string) (*P
 }
 
 // API: add Tracks To Playlist
-func addTracksToPlaylist(playlistID string, trackURIs []string) error {
+func addTracksToPlaylist(playlistID string, favoriteTrackURIs []string) error {
+	fmt.Println("===start add tracks to playlist===")
 	// 確保 Access Token 有效
 	if err := ensureValidAccessToken(); err != nil {
 		return err
@@ -584,7 +579,7 @@ func addTracksToPlaylist(playlistID string, trackURIs []string) error {
 
 	// 建立請求資料
 	data := map[string]interface{}{
-		"uris": trackURIs, // 包含 Tracks URI 的陣列
+		"uris": favoriteTrackURIs, // 包含 Tracks URI 的陣列
 	}
 	// 將資料轉換為 JSON 格式
 	body, _ := json.Marshal(data)
