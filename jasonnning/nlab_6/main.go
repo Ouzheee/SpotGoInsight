@@ -215,10 +215,10 @@ func main() {
 			if song.ID == id {
 				songList[i].IsFavorite = true // 加入最愛
 				favoriteSongs = append(favoriteSongs, songList[i])
-				trackuri := "spotify:track:" + songList[i].SongID
+				//trackuri := "spotify:track:" + songList[i].SongID
 				fmt.Println("===add favorite song: ", songList[i].Name, ", id: ", songList[i].SongID, "===")
-				fmt.Println("===trackURI: ", trackuri)
-				playlistdata.TrackURIs = append(playlistdata.TrackURIs, trackuri)
+				//fmt.Println("===trackURI: ", trackuri)
+				playlistdata.TrackURIs = append(playlistdata.TrackURIs, songList[i].SongID)
 				break
 			}
 		}
@@ -233,6 +233,7 @@ func main() {
 			return
 		}
 
+		var removeID string
 		for i, song := range favoriteSongs {
 			if song.ID == id {
 				// 從最愛中移除
@@ -243,9 +244,18 @@ func main() {
 						break
 					}
 				}
+				removeID = song.SongID
 				break
 			}
 		}
+
+		for i, uri := range playlistdata.TrackURIs {
+			if uri == removeID {
+				playlistdata.TrackURIs = append(playlistdata.TrackURIs[:i], playlistdata.TrackURIs[i+1:]...)
+				fmt.Println("remove song id:", uri)
+			}
+		}
+
 		c.Redirect(http.StatusFound, "/song")
 	})
 
@@ -309,6 +319,7 @@ func main() {
 			}
 		}
 
+		var removeID string
 		for i, song := range favoriteSongs {
 			if song.Name == this_song {
 				// 從最愛中移除
@@ -319,7 +330,15 @@ func main() {
 						break
 					}
 				}
+				removeID = song.SongID
 				break
+			}
+		}
+
+		for i, uri := range playlistdata.TrackURIs {
+			if uri == removeID {
+				playlistdata.TrackURIs = append(playlistdata.TrackURIs[:i], playlistdata.TrackURIs[i+1:]...)
+				fmt.Println("remove song id:", uri)
 			}
 		}
 
@@ -392,6 +411,12 @@ func main() {
 	})
 
 	r.POST("/favorite/saveFavorite", func(c *gin.Context) {
+		playlistname := c.PostForm("playlistname")
+		if playlistname == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid input"})
+			return
+		}
+		fmt.Println("enter name: ", playlistname)
 		err := getCurrentUserInfo(token.AccessToken)
 		if err != nil {
 			log.Println("取得UserInfo失敗:", err)
@@ -399,19 +424,18 @@ func main() {
 			return
 		}
 
-		exists, playlistID, err := playlistExists(token.AccessToken, "我的收藏")
+		exists, playlistID, err := playlistExists(token.AccessToken, playlistname)
 		if err != nil {
 			log.Println("檢查播放清單失敗:", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "檢查播放清單失敗"})
 			return
 		}
-
 		if exists {
-			fmt.Println("播放清單已存在，ID:", playlistID)
 			playlistdata.ID = playlistID
-			playlistdata.Name = "我的收藏"
+			playlistdata.Name = playlistname
 		} else {
-			playlistpointer, err = createPlaylist(userdata.UserID, "我的收藏", "From SpotGoInsight")
+			playlistpointer, err = createPlaylist(userdata.UserID, playlistname, "From SpotGoInsight")
+
 			if err != nil {
 				log.Println("新增播放清單失敗: ", err)
 				c.JSON(http.StatusInternalServerError, gin.H{"message": "無法新增播放清單"})
@@ -420,9 +444,14 @@ func main() {
 			playlistdata.ID = playlistpointer.ID
 			playlistdata.Name = playlistpointer.Name
 		}
-
 		// 新增 Tracks 到播放清單
-		err = addTracksToPlaylist(playlistdata.ID, playlistdata.TrackURIs)
+		var tracks []string
+		for _, uri := range playlistdata.TrackURIs {
+			t := fmt.Sprintf("spotify:track:%s", uri)
+			tracks = append(tracks, t)
+		}
+
+		err = addTracksToPlaylist(playlistdata.ID, tracks)
 		if err != nil {
 			log.Println("新增歌曲到播放清單失敗: ", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "無法新增歌曲到播放清單"})

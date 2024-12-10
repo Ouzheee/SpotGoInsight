@@ -30,7 +30,7 @@ GOOOOOO
     2.用code及token抓到ID
     3.看能不能用go lang 取代 js，以Gin等方式去實現js做到的功能
 
-
+---
 ### 11/20進度
 #### 前端
   前端畫面已經完成90%左右，我的收藏、播放、切換上下首都已完成
@@ -44,7 +44,7 @@ GOOOOOO
   
   在其他電腦運行程式時會無法獲取token，需解決不同電腦要重新申請client ID的問題
 
-
+---
 ### 11/21進度
 
 #### 前端
@@ -54,22 +54,27 @@ GOOOOOO
    找裡來說，所有使用者都可以使用同一個開發者提供的client ID去申請token，但目前看下來是不行的
    該問題亟待解決
    新增了preview URL、draw the toptracks on the html檔
-
+   
+---
 ### 11/22進度
 
 #### 前端
 登入、輸入client ID的網頁模塊好了，但是輸入的資訊(client Id等等沒辦法回傳，按下button之後資料就不見了，待解決
 
 #### 後端
+
 可以擷取專輯的ID、Name、藝人；歌曲屬於的專輯、唱的歌手等等。也可以在登入的Spotif帳號建立想要的歌曲組成的播放清單了。\n
 Client Id 決定先讓使用者自己想辦法生出來之後書來，再使用我們的網頁。未來有空再解決。
-問題：不知道為什麼，hadler("/callback")會執行兩次，在terminal端出都會跑2次結果。待解決s
+問題：不知道為什麼，hadler("/callback")會執行兩次，在terminal端出都會跑2次結果。待解決
 
+---
 ### 11/26進度
+
 開始合併前後端了，成功合併到獲得歌手的資料的部分。
 前端9成完成了，使用者資料弄完了
 後端的URL還沒連結完，但已經串街完歌手資料了，歌曲後面的資料再加油
 
+---
 ### 11/27進度
 
 完成了前後端的串接，搜尋歌曲的網頁可以顯示歌曲的名字、圖片、連結
@@ -79,6 +84,7 @@ Client Id 決定先讓使用者自己想辦法生出來之後書來，再使用�
 原本這是對我們來說很重要的功能，花了很多時間，結果做到一半被刪除了，下次討論想辦法解決
 ![image](https://github.com/user-attachments/assets/03ce3ba3-599f-44c7-af49-19401f10296f)
 
+---
 
 ### 11/28進度
 
@@ -97,4 +103,64 @@ Spotify的嵌入功能就如同一個
 
 另外，搜尋歌曲有時會出現和預期相差很多的歌曲，刪除歌曲也會從最左邊(歌曲陣列的第0個)開始刪除，待解決
 
+---
+### 12/3進度
+
+#### 新增功能
+* 新增匯出播放清單功能，可以在加入我的收藏後，前往專輯頁面，點擊畫面中央的匯出按鈕就會把收藏的匯出致使用者的spotify帳號![image](https://github.com/user-attachments/assets/bc0bf171-2999-4400-aeb4-66f9bbe452ea)
+並且新增的播放清單也會嵌入到畫面上
+![image](https://github.com/user-attachments/assets/c0e6464e-1123-4bc9-8f59-9a23bb6452a3)
+
+* 使用者資料修復完成
+  原本無法顯示照片、資料的問題解決，原因是user變數的設定錯誤跟重複混用，沒有傳送到HTML上
+* 播放清單可以在框框中命名，原本只能叫 我的收藏 變得可以自由命名
+* 些許介面美化，應該是最終版本，不會再更改了
+#### 遇到的問題
+* 版本合併過程中，對於VS code 合併功能不熟悉，不小心就會合併錯誤，要重新修正code
+* Access token 常常在不同帳號間使用就爆錯，連輸入client ID 的畫面都跑不了
+ 或者新增下列程式後，原本可以運行的程式又突然抓不到token了
+* 把原本加到收藏的歌曲刪除後，新建的播放清單還是會有那首歌，試著用一樣的方法刪除TrackURIs中的指定歌曲，但會變成無法新建播放清單，待解決
+```
+// Remove Singer (Delete Singer)
+	var this_song string
+	// Remove Song (Delete Song)
+	r.GET("/song/delete/:id", func(c *gin.Context) {
+		id, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid ID format"})
+			return
+		}
+
+		for i, song := range songList {
+			if song.ID == id {
+				// 從專輯列表中刪除
+				this_song = song.Name
+				songList = append(songList[:i], songList[i+1:]...)
+				break
+			}
+		}
+
+		for i, song := range favoriteSongs {
+			if song.Name == this_song {
+				// 從最愛中移除
+				favoriteSongs = append(favoriteSongs[:i], favoriteSongs[i+1:]...)
+				for j, songInList := range songList {
+					if songInList.ID == id {
+						songList[j].IsFavorite = false
+						break
+					}
+				}
+				break
+			}
+		}
+
+		c.Redirect(http.StatusFound, "/song")
+	})
+```
+
+#### 剩下的問題、想加的東西
+* Access token
+      除了陳庭毅的帳號電腦外，大家都可以跑了，陳庭毅的待解決
+* 輸入框有點問題
+* 刪除我的加到我的最愛的歌曲，可以從搜尋頁面及我的最愛中刪除，但沒辦法刪除播放清單中的歌
 

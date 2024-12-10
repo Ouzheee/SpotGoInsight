@@ -62,7 +62,7 @@ type Playlist struct {
 	Name string `json:"name"`
 	EmbedURL string `json:"embedurl"`
 	ExternalURL string `json:"externalurl"`
-	TrackURIs []string
+	TrackURIs []string `json:"trackurls"`
 }
 
 type Track struct {
@@ -453,7 +453,7 @@ func searchArtist(ARTISTNAME string, accessToken string) error {
 	artists := searchResult["artists"].(map[string]interface{})
 	items := artists["items"].([]interface{})
 	if len(items) == 0 {
-		return fmt.Errorf("未找到名为 '%s' 的歌手", ARTISTNAME)
+		return fmt.Errorf("未找到名為 '%s' 的歌手", ARTISTNAME)
 	}
 
 	// 取得第一個歌手
@@ -488,7 +488,7 @@ func searchArtist(ARTISTNAME string, accessToken string) error {
 
 	// 确认热门歌曲请求的响应状态码
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("Top Tracks API 请求失败，状态码: %d", resp.StatusCode)
+		return fmt.Errorf("top tracks API 請求失敗，錯誤碼: %d", resp.StatusCode)
 	}
 
 	// 解析热门歌曲结果
