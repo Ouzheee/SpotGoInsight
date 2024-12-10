@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>專輯管理</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #121212;
+            color: #fff;
+        }
+
+        .navbar {
+            background-color: #1db954;
+        }
+
+        .navbar-brand {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .song-card {
+            border-radius: 10px;
+            margin: 10px;
+            background-color: #181818;
+            padding: 10px;
+        }
+
+        .song-card img {
+            border-radius: 8px;
+            
+            max-width: 100%;
+            height: auto;
+        }
+
+        .footer {
+            position: fixed; /* 固定位置 */
+            bottom: 0;       /* 固定在底部 */
+            left: 0;
+            width: 100%;     /* 滿版寬度 */
+            background-color: #212529; /* 背景色，防止透明問題 */
+            color: white;    /* 字體顏色 */
+            padding: 10px 20px; /* 內邊距 */
+            z-index: 1000;   /* 保證在其他元素之上 */
+}
+
+
+        .footer .play-controls button {
+            margin: 0 10px;
+            font-size: 1.5rem;
+        }
+
+        .footer .song-info {
+            flex: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        .footer .song-info img {
+            height: 50px;
+            border-radius: 5px;
+            margin-right: 15px;
+        }
+
+        /* Add some space between the buttons */
+        .btn-space {
+            margin-right: 10px;
+        }
+        .play-controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .control-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            background-color: black; /* 背景黑色 */
+            border: 2px solid white;
+            color: white;
+        }
+
+        .control-btn:hover {
+            background-color: white;
+            color: black;
+        }
+
+        .control-icon {
+            font-family: Arial, sans-serif;
+        }
+        .audio-player {
+            margin-bottom: 10px; /* 音樂播放器與按鈕間距 */
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 10px; /* 調整按鈕之間的間距 */
+        }
+        .song-title {
+            margin-top: 10px; /* 圖片和標題之間的行距 */
+        }
+
+        /* 按鈕設計 */
+        .btn-primary {
+            background-color: #1db954;
+            border: none;
+            padding: 12px;
+            font-size: 1.2rem;
+            width: 30%;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: #1db954;
+            transform: translateY(-3px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .custom-divider {
+        border: 1px solid 	#ccc; /* 分割線顏色 */
+        margin: 30px 0; /* 上下間距 */
+        }
+
+        .custom-link {
+            color: gray; /* 預設顏色為灰色 */
+            text-decoration: none; /* 預設無底線 */
+            transition: color 0.3s ease; /* 平滑過渡效果 */
+            font-style: italic;
+        }
+
+        .custom-link:hover {
+            color: darkgray; /* 滑鼠懸停時的顏色變深 */
+            font-weight: bold; /* 可選：加粗文字 */
+            font-style: italic;
+        }
+    </style>
+</head>
+
+
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                Spotgo <span style="font-style: italic; color: #63db8d">Insight</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="/song">歌曲管理</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/singer">歌手管理</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/favorite">我的收藏</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/user">我的檔案</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    
+
+    <div class="container my-5 text-center">
+        <div class="mt-5">
+            <h1>我的收藏</h1>
+        </div>
+        
+        <!-- Display Songs -->
+        <h1 class="text-center mb-4"></h1>
+        <div class="row">
+            {{range .favorites}}
+                <div class="col-md-4">
+                    <div class="song-card text-center">
+                        <p></p>
+                        <img src="{{.ImageURL}}" alt="{{.Name}}" width="200" height="200">
+                        <p></p>
+                        <h5>{{.Name}}</h5>
+                        <p style="color: gray;">{{.Year}}</p>
+                    </div>
+                </div>
+            {{end}}
+        </div>
+        
+        <hr class="custom-divider">
+        
+        <!--匯出播放清單-->
+        <div class="mt-5">
+            <h2 class="mt-5">匯出播放清單</h2>
+            <form action="/favorite/saveFavorite" method="POST">
+                <div class="mb-3">
+                    <label for="playlistName" class="form-label"></label>
+                    <input type="text" class="form-control" id="playlistname" name="playlistname" placeholder="請輸入播放清單名稱" required>
+                </div>
+                <button type="submit" class="btn btn-success" style="writing-mode: horizontal-tb; height: auto; width: auto; white-space: nowrap;">匯出</button>
+            </form>
+
+            <!--嵌入歌單-->
+            <p></p>
+            <p><a href="{{.playlist.ExternalURL}}" target="_blank" class="custom-link">Listen in Spotify</a></p>
+            <iframe style="border-radius:12px" src="{{.playlist.EmbedURL}}" width="100%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+        </div>
+        
+        <!-- 按鈕 
+        <a href="/song" class="btn">歌曲管理</a>-->
+    </div>
+
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        let currentIndex = 0; // 當前播放歌曲的索引
+        let isPlaying = false;
+        const audio = new Audio();
+
+        const playPauseBtn = document.getElementById('play-pause');
+        const playIcon = document.getElementById('play-icon');
+        const prevSongBtn = document.getElementById('prev-song');
+        const nextSongBtn = document.getElementById('next-song');
+        const currentSong = document.getElementById('current-song');
+        const currentArtist = document.getElementById('current-artist');
+
+        // 取得所有可以點擊的專輯圖片
+        const songImages = document.querySelectorAll('.playable-song');
+
+        // 點擊專輯圖片播放歌曲
+        songImages.forEach((img, index) => {
+            img.addEventListener('click', function () {
+                const songUrl = img.getAttribute('data-url');
+                const songName = img.getAttribute('data-name');
+                const songArtist = img.getAttribute('data-artist');
+
+                // 設置並播放歌曲
+                audio.src = songUrl;
+                audio.play();
+                isPlaying = true;
+
+                currentIndex = index;
+                currentSong.textContent = songName;
+                currentArtist.textContent = songArtist;
+                playIcon.innerHTML = '&#10073;&#10073;'; // 暫停圖示
+            });
+        });
+
+        // 播放/暫停按鈕控制
+        playPauseBtn.addEventListener('click', function () {
+            if (!audio.src && songImages.length > 0) {
+                // 如果未設置任何歌曲，播放第一首
+                songImages[0].click();
+                return;
+            }
+
+            if (isPlaying) {
+                audio.pause();
+                isPlaying = false;
+                playIcon.innerHTML = '&#9654;'; // 播放圖示
+            } else {
+                audio.play();
+                isPlaying = true;
+                playIcon.innerHTML = '&#10073;&#10073;'; // 暫停圖示
+            }
+        });
+
+        // 上一首/下一首功能（根據索引切換）
+        prevSongBtn.addEventListener('click', function () {
+            currentIndex = (currentIndex - 1 + songImages.length) % songImages.length;
+            songImages[currentIndex].click();
+        });
+
+        nextSongBtn.addEventListener('click', function () {
+            currentIndex = (currentIndex + 1) % songImages.length;
+            songImages[currentIndex].click();
+        });
+
+        // 音頻播放結束時，切換到下一首
+        audio.addEventListener('ended', function () {
+            nextSongBtn.click();
+        });
+    });
+</script>

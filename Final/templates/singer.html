@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>歌手管理</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #121212;
+            color: #fff;
+        }
+
+        .navbar {
+            background-color: #1db954;
+        }
+
+        .navbar-brand {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .singer-card {
+            border-radius: 10px;
+            margin: 10px;
+            background-color: #181818;
+            padding: 10px;
+        }
+
+        .footer {
+            background-color: #181818;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            padding: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer .play-controls button {
+            margin: 0 10px;
+            font-size: 1.5rem;
+        }
+
+        .footer .song-info {
+            flex: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        .footer .song-info img {
+            height: 50px;
+            border-radius: 5px;
+            margin-right: 15px;
+        }
+
+        /* Set image size to 200x200 */
+        .singer-card img {
+            border-radius: 8px;
+            
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Button spacing */
+        .btn-wrapper {
+            display: inline-block;
+            margin-right: 10px; /* Add space between buttons */
+        }
+        .play-controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .control-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            background-color: black; /* 背景黑色 */
+            border: 2px solid white;
+            color: white;
+        }
+
+        .control-btn:hover {
+            background-color: white;
+            color: black;
+        }
+
+        .control-icon {
+            font-family: Arial, sans-serif;
+        }
+
+        .custom-divider {
+        border: 1px solid 	#ccc; /* 分割線顏色 */
+        margin: 30px 0; /* 上下間距 */
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                Spotgo <span style="font-style: italic; color: #63db8d">Insight</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="/song">歌曲管理</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/singer">歌手管理</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/favorite">我的收藏</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/user">我的檔案</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+       <!-- Add Singer Form -->
+
+    
+
+    <div class="container my-5">
+        <div class="mt-5">
+            <h2>歌手查詢</h2>
+            <form action="/add/singer" method="POST">
+                <div class="mb-3">
+                    <!--<label for="name" class="form-label">歌手名稱</label>-->
+                    <input type="text" class="form-control" id="name" name="name" placeholder="請輸入歌手名稱" required>
+                </div>
+                <button type="submit" class="btn btn-success">查詢</button>
+            </form>
+        </div>
+
+        <hr class="custom-divider">
+        
+        <h1 class="text-center mb-4">歌手列表</h1>
+        <!-- Display Singers -->
+        <div class="row">
+            {{range .singers}}
+                <div class="col-md-4">
+                    <div class="singer-card text-center">
+                        <iframe style="border-radius:12px" src="{{.EmbedURL}}" width="80%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>              
+                        <p>{{.Genre}}</p>
+
+                        <!-- Add to Favorite Button -->
+                        <div class="btn-wrapper">
+                            {{if not .IsFavorite}}
+                                <a href="/favorite/singer/{{.ID}}" class="btn btn-outline-light">加入最愛</a>
+                            {{else}}
+                                <a href="/favorite/singer/remove/{{.ID}}" class="btn btn-danger">移除最愛</a>
+                            {{end}}
+                        </div>
+
+                        <!-- Delete Button -->
+                        <div class="btn-wrapper">
+                            <a href="/singer/delete/{{.ID}}" class="btn btn-danger">刪除歌手</a>
+                        </div>
+                    </div>
+                </div>
+            {{end}}
+            
+            <hr class="custom-divider">
+        
+            <h2 class="mt-5">我的最愛歌手</h2>
+            <div class="row">
+                {{range .favorites}}
+                    <div class="col-md-4">
+                        <div class="singer-card text-center">
+                            <img src="{{.ImageURL}}" width="80%" alt="{{.Name}}"> <!-- 假設這是歌手圖片 -->
+                            <h5>{{.Name}}</h5>
+                            <p>{{.Genre}}</p>
+                        </div>
+                    </div>
+                {{end}}
+            </div>
+        </div>
+    </div>
+       
+
+     
+
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            let isPlaying = false;
+            const audio = new Audio('https://p.scdn.co/mp3-preview/82e442871e6afd7efa4410ca735b3b13644f5184?cid=cfe923b2d660439caf2b557b21f31221');
+            const playPauseBtn = document.getElementById('play-pause');
+            const playIcon = document.getElementById('play-icon');
+            const prevSongBtn = document.getElementById('prev-song');
+            const nextSongBtn = document.getElementById('next-song');
+    
+            playPauseBtn.addEventListener('click', function () {
+                if (isPlaying) {
+                    audio.pause();
+                    playIcon.innerHTML = '&#9654;'; // 變回播放圖示
+                } else {
+                    audio.play();
+                    playIcon.innerHTML = '&#10073;&#10073;'; // 暫停圖示
+                }
+                isPlaying = !isPlaying;
+            });
+    
+            prevSongBtn.addEventListener('click', function () {
+                console.log('前一首歌曲');
+            });
+    
+            nextSongBtn.addEventListener('click', function () {
+                console.log('下一首歌曲');
+            });
+    
+            audio.addEventListener('ended', function () {
+                playIcon.innerHTML = '&#9654;';
+                isPlaying = false;
+            });
+        });
+    </script>
+</body>
+</html>
