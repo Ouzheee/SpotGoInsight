@@ -89,6 +89,18 @@
             background-color: #737373;
             transform: scale(1.05);
         }
+
+        .custom-link {
+            color: gray; /* 預設顏色為灰色 */
+            text-decoration: none; /* 預設無底線 */
+            transition: color 0.3s ease; /* 平滑過渡效果 */
+            font-style: italic;
+        }
+
+        .custom-link:hover {
+            color: darkgray; /* 滑鼠懸停時的顏色變深 */
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
@@ -113,6 +125,8 @@
                 <input type="text" class="form-control" id="client_secret" name="client_secret" required>
             </div>
             <button type="submit" class="btn btn-primary">登入</button>
+            <p></p>
+            <p style="text-align: center;">Don't have an account? <a href="https://developer.spotify.com/" target="_blank" class="custom-link">Sign up for Spotgo Insight</a></p>
         </form>
     </div>
 
