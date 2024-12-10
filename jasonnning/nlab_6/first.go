@@ -62,7 +62,7 @@ type Playlist struct {
 	Name string `json:"name"`
 	EmbedURL string `json:"embedurl"`
 	ExternalURL string `json:"externalurl"`
-	TrackURIs []string
+	TrackURIs []string `json:"trackurls"`
 }
 
 type Track struct {
