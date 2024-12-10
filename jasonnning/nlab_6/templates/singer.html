@@ -95,6 +95,11 @@
         .control-icon {
             font-family: Arial, sans-serif;
         }
+
+        .custom-divider {
+        border: 1px solid 	#ccc; /* 分割線顏色 */
+        margin: 30px 0; /* 上下間距 */
+        }
     </style>
 </head>
 <body>
@@ -124,13 +129,16 @@
             <h3>歌手查詢</h3>
             <form action="/add/singer" method="POST">
                 <div class="mb-3">
-                    <label for="name" class="form-label">歌手名稱</label>
-                    <input type="text" class="form-control" id="name" name="name" required>
+                    <!--<label for="name" class="form-label">歌手名稱</label>-->
+                    <input type="text" class="form-control" id="name" name="name" placeholder="請輸入歌手名稱" required>
                 </div>
                 <button type="submit" class="btn btn-success">查詢</button>
             </form>
-          </div>    
-        <h1 class="text-center mb-4">歌手</h1>
+        </div>
+
+        <hr class="custom-divider">
+        
+        <h1 class="text-center mb-4">歌手列表</h1>
         <!-- Display Singers -->
         <div class="row">
             {{range .singers}}
