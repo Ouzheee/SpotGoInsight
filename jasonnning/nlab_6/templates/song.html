@@ -12,7 +12,7 @@
         }
 
         .navbar {
-            background-color: #1db954;
+            background-color: 	#1DB954;
         }
 
         .navbar-brand {
@@ -105,6 +105,10 @@
         .song-title {
             margin-top: 10px; /* 圖片和標題之間的行距 */
         }
+        .custom-divider {
+        border: 1px solid 	#ccc; /* 分割線顏色 */
+        margin: 30px 0; /* 上下間距 */
+        }
     </style>
 </head>
 
@@ -136,13 +140,15 @@
             <h3>歌曲查詢</h3>
             <form action="/add/song" method="POST">
                 <div class="mb-3">
-                    <label for="name" class="form-label">歌曲名稱</label>
-                    <input type="text" class="form-control" id="name" name="name" required>
+                    <!--<label for="name" class="form-label">歌曲名稱</label>-->
+                    <input type="text" class="form-control" id="name" name="name" placeholder="請輸入歌曲名稱" required>
                 </div>
                 <button type="submit" class="btn btn-success">查詢</button>
             </form>
         </div>
 
+        <hr class="custom-divider">
+        
         <h1 class="text-center mb-4">歌曲列表</h1>
         <!-- Display songs -->
         <div class="row">

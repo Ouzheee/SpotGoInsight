@@ -71,8 +71,8 @@ func main() {
 	r.LoadHTMLGlob("templates/*")
 
 	fmt.Println("伺服器啟動於 http://localhost:8080")
-	fmt.Println("cliend id: 592fa46f290e4f1aa8b5768bbb802177")
-	fmt.Println("cliend secret: 4ddd10a13f2a4c00af97c1916b21a8c2")
+	//fmt.Println("cliend id: 592fa46f290e4f1aa8b5768bbb802177")
+	//fmt.Println("cliend secret: 4ddd10a13f2a4c00af97c1916b21a8c2")
 
 	/*================================進入網頁URL指令==================================*/
 	// Main Menu page

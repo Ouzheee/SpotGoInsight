@@ -11,7 +11,7 @@
             color: #fff;
         }
         .navbar {
-            background-color: #1db954;
+            background-color: 	#1DB954;
         }
         .navbar-brand {
             font-size: 1.8rem;
@@ -64,12 +64,8 @@
                         <img src="{{.user.ImageURL}}" alt="User Image">
                         
                         <!-- User Name -->
-                        <p class="card-text">User Name: {{.user.Name}}</p>
-                        <p class="card-text">User's Spotify URL: {{.user.SpotifyURL}}</p>
-                        
-                        <!-- Other Information -->
-                        <p class="card-text">Client ID: {{.user.ClientID}}</p>
-                        <p class="card-text">Client Secret: {{.user.ClientSecret}}</p>
+                        <p class="card-text" style="font-size: 30px; font-weight: bold;">{{.user.Name}}</p>
+                        <p><a href="{{.user.SpotifyURL}}" target="_blank">User's Profile in Spotify</a></p>
                         
                         <!-- Logout Button -->
                         <a href="/logout" class="btn btn-danger">登出</a>
