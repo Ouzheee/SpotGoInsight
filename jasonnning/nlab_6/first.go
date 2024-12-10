@@ -91,7 +91,9 @@ type Album struct {
 var userdata User2
 var singerdata Singer
 var trackdata Track
-var playlistdata Playlist
+var playlistdata  = Playlist{
+	ExternalURL: "http://localhost:8080/favorite",
+}
 var playlistpointer *Playlist
 var token *TokenResponse
 
