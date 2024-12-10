@@ -555,7 +555,7 @@ func createPlaylist(userID string, playlistName, playlistDescription string) (*P
 		return nil, err
 	}
 
-	log.Println("已新增播放清單")
+	//log.Println("已新增播放清單")
 	return &playlist, nil
 }
 
