@@ -106,7 +106,9 @@
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand" href="/">Spotgo</a>
+            <a class="navbar-brand" href="/">
+                Spotgo <span style="font-style: italic; color: #63db8d">Insight</span>
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -126,7 +128,7 @@
 
     <div class="container my-5">
         <div class="mt-5">
-            <h3>歌手查詢</h3>
+            <h2>歌手查詢</h2>
             <form action="/add/singer" method="POST">
                 <div class="mb-3">
                     <!--<label for="name" class="form-label">歌手名稱</label>-->
@@ -163,6 +165,9 @@
                     </div>
                 </div>
             {{end}}
+            
+            <hr class="custom-divider">
+        
             <h2 class="mt-5">我的最愛歌手</h2>
             <div class="row">
                 {{range .favorites}}

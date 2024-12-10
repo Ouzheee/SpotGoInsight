@@ -22,6 +22,7 @@
         }
         .user-card {
             text-align: center;
+            background-color: #181818;
         }
         .user-card img {
             border-radius: 50%;
@@ -32,13 +33,27 @@
         .card {
             background-color: #181818;
         }
+        .custom-link {
+            color: gray; /* 預設顏色為灰色 */
+            text-decoration: none; /* 預設無底線 */
+            transition: color 0.3s ease; /* 平滑過渡效果 */
+            font-style: italic;
+        }
+
+        .custom-link:hover {
+            color: darkgray; /* 滑鼠懸停時的顏色變深 */
+            font-weight: bold; /* 可選：加粗文字 */
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand" href="/">Spotgo</a>
+            <a class="navbar-brand" href="/">
+                Spotgo <span style="font-style: italic; color: #63db8d">Insight</span>
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -56,6 +71,7 @@
     <!-- User Information -->
     <div class="container">
         <h2 class="text-center">用戶資料</h2>
+        <p></p>
         <div class="row">
             <div class="col-md-6 offset-md-3">
                 <div class="card bg-dark text-white">
@@ -65,7 +81,7 @@
                         
                         <!-- User Name -->
                         <p class="card-text" style="font-size: 30px; font-weight: bold;">{{.user.Name}}</p>
-                        <p><a href="{{.user.SpotifyURL}}" target="_blank">User's Profile in Spotify</a></p>
+                        <p><a href="{{.user.SpotifyURL}}" target="_blank" class="custom-link">User's Profile in Spotify</a></p>
                         
                         <!-- Logout Button -->
                         <a href="/logout" class="btn btn-danger">登出</a>

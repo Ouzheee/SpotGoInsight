@@ -300,8 +300,6 @@ func main() {
 		c.Redirect(http.StatusFound, "/singer")
 	})
 
-	// Remove Singer (Delete Singer)
-	var this_song string
 	// Remove Song (Delete Song)
 	r.GET("/song/delete/:id", func(c *gin.Context) {
 		id, err := strconv.Atoi(c.Param("id"))
@@ -310,6 +308,7 @@ func main() {
 			return
 		}
 
+		var this_song string
 		for i, song := range songList {
 			if song.ID == id {
 				// 從專輯列表中刪除
@@ -343,6 +342,50 @@ func main() {
 		}
 
 		c.Redirect(http.StatusFound, "/song")
+	})
+
+	// Remove Singer (Delete Singer)
+	var this_singer string
+	r.GET("/singer/delete/:id", func(c *gin.Context) {
+		id, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid ID format"})
+			return
+		}
+
+		for i, singer := range singerList {
+			if singer.ID == id {
+				// 從專輯列表中刪除
+				this_singer = singer.Name
+				singerList = append(singerList[:i], singerList[i+1:]...)
+				break
+			}
+		}
+
+		var removeID string
+		for i, singer := range favoriteSingers {
+			if singer.Name == this_singer {
+				// 從最愛中移除
+				favoriteSingers = append(favoriteSingers[:i], favoriteSingers[i+1:]...)
+				for j, singerInList := range singerList {
+					if singerInList.ID == id {
+						singerList[j].IsFavorite = false
+						break
+					}
+				}
+				removeID = singer.SingerID
+				break
+			}
+		}
+
+		for i, uri := range playlistdata.TrackURIs {
+			if uri == removeID {
+				playlistdata.TrackURIs = append(playlistdata.TrackURIs[:i], playlistdata.TrackURIs[i+1:]...)
+				fmt.Println("remove singer id:", uri)
+			}
+		}
+
+		c.Redirect(http.StatusFound, "/singer")
 	})
 
 	//login輸入操作

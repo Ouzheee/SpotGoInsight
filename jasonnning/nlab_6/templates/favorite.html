@@ -128,6 +128,19 @@
         border: 1px solid 	#ccc; /* 分割線顏色 */
         margin: 30px 0; /* 上下間距 */
         }
+
+        .custom-link {
+            color: gray; /* 預設顏色為灰色 */
+            text-decoration: none; /* 預設無底線 */
+            transition: color 0.3s ease; /* 平滑過渡效果 */
+            font-style: italic;
+        }
+
+        .custom-link:hover {
+            color: darkgray; /* 滑鼠懸停時的顏色變深 */
+            font-weight: bold; /* 可選：加粗文字 */
+            font-style: italic;
+        }
     </style>
 </head>
 
@@ -136,7 +149,9 @@
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand" href="/">Spotgo</a>
+            <a class="navbar-brand" href="/">
+                Spotgo <span style="font-style: italic; color: #63db8d">Insight</span>
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -164,10 +179,11 @@
             {{range .favorites}}
                 <div class="col-md-4">
                     <div class="song-card text-center">
-                        <img src="{{.ImageURL}}" alt="{{.Name}}" width="120" height="120">
+                        <p></p>
+                        <img src="{{.ImageURL}}" alt="{{.Name}}" width="200" height="200">
                         <p></p>
                         <h5>{{.Name}}</h5>
-                        <p>{{.Year}}</p>
+                        <p style="color: gray;">{{.Year}}</p>
                     </div>
                 </div>
             {{end}}
@@ -177,18 +193,21 @@
         
         <!--匯出播放清單-->
         <div class="mt-5">
+            <h2 class="mt-5">匯出播放清單</h2>
             <form action="/favorite/saveFavorite" method="POST">
                 <div class="mb-3">
                     <label for="playlistName" class="form-label"></label>
                     <input type="text" class="form-control" id="playlistname" name="playlistname" placeholder="請輸入播放清單名稱" required>
                 </div>
-                <button type="submit" class="btn btn-success" style="writing-mode: horizontal-tb; height: auto; width: auto; white-space: nowrap;">匯出播放清單</button>
+                <button type="submit" class="btn btn-success" style="writing-mode: horizontal-tb; height: auto; width: auto; white-space: nowrap;">匯出</button>
             </form>
+
+            <!--嵌入歌單-->
+            <p></p>
+            <p><a href="{{.playlist.ExternalURL}}" target="_blank" class="custom-link">Listen in Spotify</a></p>
+            <iframe style="border-radius:12px" src="{{.playlist.EmbedURL}}" width="100%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
         </div>
-
-        <!--嵌入歌單-->
-        <iframe style="border-radius:12px" src="{{.playlist.EmbedURL}}" width="100%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
-
+        
         <!-- 按鈕 
         <a href="/song" class="btn">歌曲管理</a>-->
     </div>
