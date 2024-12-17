@@ -1,7 +1,23 @@
 # SpotGoInsight
-GOOOOOO
+113-1 Go 程式設計Final Project Group 11.
 
+### 使用方式
 
+1.在Spotify Developers登入帳號並點擊帳號，選擇下方的DashBoard
+![image](https://github.com/user-attachments/assets/d30fae1f-d033-45ea-8288-dafbaa9cac72)
+
+2.點擊create app，在redirect URL欄輸入http://localhost:8080/callback並點擊add，app name 跟 app description可以自由輸入，然後點擊save
+![image](https://github.com/user-attachments/assets/3741bd09-408a-4ce5-a2c7-dbc6e6bcf046)
+
+3.進到app的主頁，點擊右上角的settings，複製你的client ID 跟 client Secret
+
+4.clone我們的repo，進入 Final 後 輸入 go run . 並打開https //localhost.8080
+5.輸入Client ID 跟 Client Secret 後即可使用
+
+hint：本程式僅供個人學習使用，請勿使用於任何商業用途。且本程式不會儲存使用者輸入之ClinetID等任何資料，所有授權僅用於API串街使用
+
+---
+## 開發日誌
 ### 11/19進度
 #### 前端
   網頁分成兩個模式 signer跟albumn mode，可以輸入歌手或專輯的名字，之後連結後端及API功能後可以顯示歌手的資料、專輯歌曲等等
