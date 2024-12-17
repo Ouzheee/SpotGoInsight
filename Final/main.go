@@ -448,7 +448,7 @@ func main() {
 			ImageURL:     userdata.ImageURL,
 			UserID:       userdata.UserID,
 		}
-		fmt.Printf("User Image: %s\n", currentUser.ImageURL)
+		//fmt.Printf("User Image: %s\n", currentUser.ImageURL)
 		users = append(users, *currentUser)
 		c.Redirect(http.StatusFound, "/user")
 	})

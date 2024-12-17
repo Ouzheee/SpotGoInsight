@@ -499,7 +499,7 @@ func searchArtist(ARTISTNAME string, accessToken string) error {
 			ImageURL:   trackImageURL,
 			PreviewURL: previewURL,
 		})
-		fmt.Printf(" %s: %s\n", trackName, previewURL)
+		//fmt.Printf(" %s: %s\n", trackName, previewURL)
 	}
 
 	singerdata.SingerID = artistID
